@@ -55,7 +55,21 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
           <p>{t`Description of LDOT token leverager function.`}</p>
         </Description>
         <FlowInfo>
-
+          <FlowDescription>
+            <p>{t`Flash borrow 60 DOT with flashloan`}</p>
+          </FlowDescription>
+          <FlowDescription>
+            <p>{t`Wrap 60 dot into DOT`}</p>
+          </FlowDescription>
+          <FlowDescription>
+            <p>{t`Deposit exchanged LDOT into lending pool`}</p>
+          </FlowDescription>
+          <FlowDescription>
+            <p>{t`Borrow 50 DOT from lending pool`}</p>
+          </FlowDescription>
+          <FlowDescription>
+            <p>{t`Pay flashloan 60 DOT`}</p>
+          </FlowDescription>
         </FlowInfo>
       </InfoDiv>
       <ActionDiv>
@@ -103,7 +117,7 @@ const Description = styled.p`
 const WrapperDiv = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 24px 18px;
+  /* padding: 24px 18px; */
   ${SimpleCtaButton} {
     margin-top: 16px;
   }
@@ -135,7 +149,7 @@ const WrapperDiv = styled.div`
   }
   @media ${breakpoint.xl} {
     flex-direction: row;
-    padding-top: 48px;
+    /* padding-top: 48px; */
     ${Action} {
       padding: 32px;
       font-size: 18px;
@@ -165,6 +179,15 @@ const SupplyDiv = styled.div`
 const FlowInfo = styled.div`
   display: flex;
   flex-direction: column;
+  background-color: #131313;
+  padding: 8px;
+`
+
+const FlowDescription = styled.p`
+  line-height: 1.5;
+  background-color: rgba(255,255,255,0.08);
+  padding: 4px 4px;
+  margin-bottom: 8px;
 `
 
 const InfoTitle = styled.p`
@@ -173,16 +196,17 @@ const InfoTitle = styled.p`
 
 const InfoDiv = styled.div`
   width: 100%;
+  padding: 24px 18px;
   @media ${breakpoint.xl} {
-    padding-right: 9px;
     width: 55%;
   }
 `
 
 const ActionDiv = styled.div`
   width: 100%;
+  background-color: #131313;
+  padding: 24px 18px;
   @media ${breakpoint.xl} {
-    padding-left: 9px;
     width: 45%;
   }
 `
