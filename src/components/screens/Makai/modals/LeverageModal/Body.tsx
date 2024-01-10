@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
+import debounce from 'debounce'
 import { FC, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
@@ -78,7 +79,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         />
 
         <SimpleCtaButton
-          onClick={() => startLeverager(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage)}
+          onClick={debounce(() => startLeverager(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage), 2000, { immediate: true })}
           disabled={!!estimation.unavailableReason}
         >
           {estimation.unavailableReason || t`Start leverager`}
