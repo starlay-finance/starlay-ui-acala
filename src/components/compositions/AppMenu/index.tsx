@@ -21,10 +21,8 @@ import { gray } from 'src/styles/colors'
 import { BN_ZERO, formatAmt, formatUSD } from 'src/utils/number'
 import {
   APP_ROOT,
-  MAKAI,
   MARKETS,
   byNetwork,
-  evmOnly,
   matchPath
 } from 'src/utils/routes'
 import styled from 'styled-components'
@@ -61,7 +59,9 @@ const MenuItems: FC<{ showClaim: VoidFunction }> = ({ showClaim }) => {
       <Link
         href={matchPath(pathname, MARKETS) ? '' : byNetwork(MARKETS, network)}
       >{t`Markets`}</Link>
-      <Link
+      <Link href="https://apps.acala.network/swap">{t`Swap`}</Link>
+
+      {/* <Link
         href={matchPath(pathname, MAKAI) ? '' : evmOnly(MAKAI, network)}
       >{t`Makai`}</Link>
       {/* <Link href="">{t`LAY/veLAY`}</Link>
