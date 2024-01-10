@@ -21,8 +21,10 @@ import { gray } from 'src/styles/colors'
 import { BN_ZERO, formatAmt, formatUSD } from 'src/utils/number'
 import {
   APP_ROOT,
+  MAKAI,
   MARKETS,
   byNetwork,
+  evmOnly,
   matchPath
 } from 'src/utils/routes'
 import styled from 'styled-components'
@@ -59,9 +61,9 @@ const MenuItems: FC<{ showClaim: VoidFunction }> = ({ showClaim }) => {
       <Link
         href={matchPath(pathname, MARKETS) ? '' : byNetwork(MARKETS, network)}
       >{t`Markets`}</Link>
-      {/* <Link
+      <Link
         href={matchPath(pathname, MAKAI) ? '' : evmOnly(MAKAI, network)}
-      >{t`Makai`}</Link> */}
+      >{t`Makai`}</Link>
       {/* <Link href="">{t`LAY/veLAY`}</Link>
       <button onClick={showClaim} disabled={!account || network !== 'EVM'}>
         Claim LAY

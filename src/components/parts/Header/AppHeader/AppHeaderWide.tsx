@@ -20,8 +20,10 @@ import { shortenAddress } from 'src/utils/address'
 import {
   APP,
   APP_ROOT,
+  MAKAI,
   MARKETS,
   byNetwork,
+  evmOnly,
   matchPath
 } from 'src/utils/routes'
 import styled, { css } from 'styled-components'
@@ -79,10 +81,10 @@ export const AppHeaderWide = styled(({ className }) => {
         <Tab $active={matchPath(pathname, MARKETS)}>
           <Link href={byNetwork(MARKETS, network)}>{t`Markets`}</Link>
         </Tab>
-        {/* <Tab $active={matchPath(pathname, MAKAI)}>
+        <Tab $active={matchPath(pathname, MAKAI)}>
           <Link href={evmOnly(MAKAI, network)}>{t`Makai`}</Link>
         </Tab>
-        <Tab $active={matchPath(pathname, LAY_VELAY)}>
+        {/* <Tab $active={matchPath(pathname, LAY_VELAY)}>
           <Link href={evmOnly(LAY_VELAY, network)}>{t`LAY/veLAY`}</Link>
         </Tab> */}
       </Nav>

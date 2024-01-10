@@ -1,10 +1,8 @@
 import { InterestRate } from '@starlay-finance/contract-helpers'
 import { BigNumber } from '@starlay-finance/math-utils'
-import { getMarketConfigEVM, getNetworkConfigEVM } from 'src/libs/config'
+import { getMarketConfigEVM } from 'src/libs/config'
 import { leveragerContract } from 'src/libs/leverager'
-import { BASE_ASSET_DUMMY_ADDRESS } from 'src/libs/pool-data-provider/converters/constants'
 import { EthereumAddress } from 'src/types/web3'
-import { equals } from 'src/utils/address'
 import useSWRImmutable from 'swr/immutable'
 import { useEVMWallet } from '../useEVMWallet'
 import { useStaticRPCProviderEVM } from '../useStaticRPCProviderEVM'
@@ -24,7 +22,7 @@ export const useLeverager = () => {
 
   const { handleTx } = useTxHandler()
 
-  const loop = async (param: {
+  const leverage = async (param: {
     amount: BigNumber
     asset: EthereumAddress
     debtToken: EthereumAddress
@@ -46,27 +44,7 @@ export const useLeverager = () => {
     )
   }
 
-  const closeLoop = async (param: {
-    underlyingAsset: EthereumAddress
-    lToken: EthereumAddress
-  }) => {
-    if (!leverager || !account || !signer) throw new Error('Unexpected state')
-    const { baseAsset } = getNetworkConfigEVM(provider!.chainId)
-
-    return handleTx(
-      await leverager.close({
-        user: account,
-        reserve: !equals(param.underlyingAsset, BASE_ASSET_DUMMY_ADDRESS)
-          ? param.underlyingAsset
-          : baseAsset.wrapperAddress,
-        lToken: param.lToken,
-      }),
-      signer,
-    )
-  }
-
   return {
-    loop,
-    closeLoop,
+    leverage,
   }
 }

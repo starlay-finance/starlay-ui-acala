@@ -10,7 +10,6 @@ import { breakpoint, contentMaxWidthCssVar } from 'src/styles/mixins'
 import { APP } from 'src/utils/routes'
 import styled from 'styled-components'
 import { MakaiMarkets } from './MakaiMarkets'
-import { UnclaimedReward } from './UnclaimedReward'
 
 export const Makai = () => {
   const { data } = useNetworkType()
@@ -26,7 +25,6 @@ export const Makai = () => {
         <AppBackground />
         <Content>
           <MakaiMarkets />
-          <UnclaimedReward />
         </Content>
         <AppMenu isOpen={isMenuOpen} close={() => setMenuOpen(false)} />
       </Main>
@@ -53,18 +51,10 @@ const Main = styled.main`
     ${MakaiMarkets} {
       flex: 1;
     }
-    ${UnclaimedReward} {
-      display: none;
-      width: 400px;
-      max-height: 294px;
-    }
   }
   @media ${breakpoint.xl} {
     ${Content} {
       margin-top: 80px;
-      ${UnclaimedReward} {
-        display: block;
-      }
     }
   }
 `

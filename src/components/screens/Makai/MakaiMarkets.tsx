@@ -9,21 +9,20 @@ import {
 } from 'src/components/compositions/Markets/MarketTable'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
-import { BlinkWrapper } from 'src/components/parts/Number/Blink'
+import { LEVERAGEABLE_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
 import { makaiHoverGradients } from 'src/styles/mixins'
 import { AssetMarketData, User } from 'src/types/models'
-import { calculateLoopingAPR, ltvToLoopingLeverage } from 'src/utils/calculator'
 import { symbolSorter } from 'src/utils/market'
-import { BN_ZERO, formatAmt, formatPct } from 'src/utils/number'
+import { BN_ZERO, formatAmt } from 'src/utils/number'
 import styled, { css } from 'styled-components'
-import { useLoopingModal } from './modals/LoopingModal'
+import { useLeverageModal } from './modals/LeverageModal'
 
 const COLUMNS = [
   { id: 'asset', name: t`Asset`, widthRatio: 4 },
-  { id: 'makaiAPR', name: t`Makai APR`, widthRatio: 3 },
+  // { id: 'makaiAPR', name: t`Makai APR`, widthRatio: 3 },
   { id: 'wallet', name: t`Wallet_Balance`, widthRatio: 5 },
 ]
 
@@ -34,7 +33,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
   const { data: userData } = useUserData()
   const { data: balances } = useWalletBalance()
   const { open: openWalletModal } = useWalletModal()
-  const { open: openLoopingModal } = useLoopingModal()
+  const { open: openLeveragerModal } = useLeverageModal()
   const {
     assets,
     marketReferenceCurrencyPriceInUSD = BN_ZERO,
@@ -42,9 +41,10 @@ export const MakaiMarkets = asStyled(({ className }) => {
   } = marketData || {}
   const markets = (assets || [])
     .filter((each) => each.isActive)
+    .filter((each) => LEVERAGEABLE_ASSET_SYMBOLS.includes(each.symbol))
     .sort(symbolSorter)
 
-  const loopingParams = (asset: AssetMarketData, userData: User) => ({
+  const leveragerParams = (asset: AssetMarketData, userData: User) => ({
     asset,
     marketReferenceCurrencyPriceInUSD,
     marketReferenceCurrencyDecimals,
@@ -61,7 +61,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
     const asset = assets.find((each) => each.symbol === query.asset)
     if (!asset) return
     replace(pathname, undefined, { shallow: true })
-    openLoopingModal({ ...loopingParams(asset, userData), max: true })
+    openLeveragerModal({ ...leveragerParams(asset, userData), max: true })
   }, [userData, assets, query])
 
   return (
@@ -76,11 +76,8 @@ export const MakaiMarkets = asStyled(({ className }) => {
               balance: balances[asset.symbol],
               onClick: userData
                 ? () =>
-                  openLoopingModal({
+                  openLeveragerModal({
                     asset,
-                    marketReferenceCurrencyPriceInUSD,
-                    marketReferenceCurrencyDecimals,
-                    userSummary: userData.summary,
                     userAssetBalance: {
                       ...userData.balanceByAsset[asset.symbol],
                       inWallet: balances[asset.symbol],
@@ -115,24 +112,24 @@ const marketRow = ({
     symbol,
     displaySymbol,
     icon,
-    depositIncentiveAPR,
-    variableBorrowIncentiveAPR,
-    baseLTVasCollateral,
+    // depositIncentiveAPR,
+    // variableBorrowIncentiveAPR,
+    // baseLTVasCollateral,
     usageAsCollateralEnabled,
     isDepositInactive,
     isBorrowInactive,
     borrowUnsupported,
     makaiUnsupported,
   } = asset
-  const makaiAPR = calculateLoopingAPR({
-    leverage: ltvToLoopingLeverage(baseLTVasCollateral),
-    depositIncentiveAPR,
-    variableBorrowIncentiveAPR,
-  })
-  const displayMakaiAPR = formatPct(makaiAPR, {
-    shorteningThreshold: 99,
-    decimalPlaces: 2,
-  })
+  // const makaiAPR = calculateLoopingAPR({
+  //   leverage: ltvToLoopingLeverage(baseLTVasCollateral),
+  //   depositIncentiveAPR,
+  //   variableBorrowIncentiveAPR,
+  // })
+  // const displayMakaiAPR = formatPct(makaiAPR, {
+  //   shorteningThreshold: 99,
+  //   decimalPlaces: 2,
+  // })
   return {
     id: symbol,
     isDepositInactive,
@@ -146,16 +143,16 @@ const marketRow = ({
       isBorrowInactive,
     data: {
       asset: <AssetTd icon={icon} name={displaySymbol || symbol} />,
-      makaiAPR:
-        borrowUnsupported || makaiUnsupported ? (
-          'Coming soon'
-        ) : !usageAsCollateralEnabled ||
-          isDepositInactive ||
-          isBorrowInactive ? (
-          '-'
-        ) : (
-          <BlinkWrapper value={displayMakaiAPR}>{displayMakaiAPR}</BlinkWrapper>
-        ),
+      // makaiAPR:
+      //   borrowUnsupported || makaiUnsupported ? (
+      //     'Coming soon'
+      //   ) : !usageAsCollateralEnabled ||
+      //     isDepositInactive ||
+      //     isBorrowInactive ? (
+      //     '-'
+      //   ) : (
+      //     <BlinkWrapper value={displayMakaiAPR}>{displayMakaiAPR}</BlinkWrapper>
+      //   ),
       wallet: formatAmt(balance, { symbol: asset.symbol, decimalPlaces: 2 }),
     },
   }

@@ -10,36 +10,32 @@ import {
   loopingLeverageToLtv,
   significantLoopingCount,
 } from 'src/utils/calculator'
-import { LoopingModalBody, LoopingModalBodyProps } from './Body'
+import { LeveragerModalBody, LeveragerModalBodyProps } from './Body'
 
-export const Looping: FC<
-  ModalContentProps<Omit<LoopingModalBodyProps, 'loop' | 'close'>>
+export const Leverager: FC<
+  ModalContentProps<Omit<LeveragerModalBodyProps, 'startLeverager'>>
 > = ({ close, ...props }) => {
-  const { loop, closeLoop } = useLeverager()
+  const { leverage } = useLeverager()
   const { withTracking } = useTracking()
   const { asset } = props
 
-  const loopWithTracking = withTracking('loop', loop)
+  const loopWithTracking = withTracking('leverage', leverage)
 
   return (
     <DefaultModalContent
       headerNode={<AssetLabel asset={asset} />}
       bodyNode={
-        <LoopingModalBody
+        <LeveragerModalBody
           {...props}
-          loop={(amount, leverage) =>
+          startLeverager={(amount, leverage) =>
             loopWithTracking({
+              // repayAmount: amount,
+              // borrowAmount: amount.multipliedBy(leverage),
               amount,
               asset: asset.underlyingAsset as EthereumAddress,
               debtToken: asset.vdTokenAddress as EthereumAddress,
               borrowRatio: loopingLeverageToLtv(leverage),
               loopCount: significantLoopingCount(leverage),
-            })
-          }
-          close={() =>
-            closeLoop({
-              underlyingAsset: asset.underlyingAsset as EthereumAddress,
-              lToken: asset.lTokenAddress as EthereumAddress,
             })
           }
         />
@@ -49,5 +45,5 @@ export const Looping: FC<
   )
 }
 
-export const useLoopingModal = () =>
-  useModalDialog(requireSupportedChain(Looping))
+export const useLeverageModal = () =>
+  useModalDialog(requireSupportedChain(Leverager))

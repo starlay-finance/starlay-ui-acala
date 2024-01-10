@@ -162,6 +162,60 @@ export const RatioControl = asStyled<RatioControlProps>(
   height: 96px;
   border-bottom: 1px solid ${offWhite}3a;
 `
+
+export const RatioSliderControl = asStyled<RatioControlProps>(
+  ({
+    className,
+    current,
+    setValue,
+    min = 1,
+    max,
+    customLabel,
+    sliderColors,
+    showValueOnCustom = true,
+    step = 0.1,
+    disabled,
+  }) => {
+    return (
+      <div className={className}>
+        <RatioSliderSimple>
+          <LabelSimple>
+            {customLabel}
+            {":"}
+            {
+              showValueOnCustom && (
+                <>
+                  <span>{formatAmt(current, { decimalPlaces: 1 })}x</span>
+                </>
+              )
+            }
+          </LabelSimple>
+          <Barometer
+            ratio={current.minus(BN_ONE).div(max.minus(BN_ONE)).toNumber()}
+            colors={sliderColors}
+            styles={{ barometer: barometerStyle, thumb: thumbStyle }}
+            rangeInputProps={{
+              min: 1,
+              max: max.toNumber(),
+              step,
+              onChange: ({ target: { value } }) => {
+                if (+value < min) {
+                  setValue(valueToBigNumber(min))
+                  return
+                }
+                setValue(valueToBigNumber(value))
+              },
+              disabled,
+            }}
+          />
+        </RatioSliderSimple>
+      </div>
+    )
+  },
+)`
+  margin-top: 24px;
+  height: 96px;
+`
 const barometerStyle = css`
   height: 4px;
 `
@@ -277,5 +331,22 @@ const RatioSlider = styled.div`
         background: ${purple};
       }
     }
+  }
+`
+const RatioSliderSimple = styled.div`
+  ${Barometer} {
+    margin-top: 32px;
+  }
+`
+
+const LabelSimple = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  > span {
+    font-size: 20px;
+    font-weight: bold;
+    color: ${offWhite};
   }
 `
