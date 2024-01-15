@@ -61,19 +61,19 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow ${Number(supplyAmount) * Number(leverage)} DOT with flashloan`}</p>
+            <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${Number(supplyAmount) * Number(leverage)} dot into DOT`}</p>
+            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} dot into DOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Borrow ${Number(supplyAmount) * (Number(leverage) - 1)} DOT from lending pool`}</p>
+            <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * (Number(leverage) - 1)} DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan ${Number(supplyAmount) * Number(leverage)} DOT`}</p>
+            <p>{t`Pay flashloan ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
