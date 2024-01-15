@@ -1,4 +1,5 @@
 import {
+  LogoAcala,
   LogoArthSwap,
   LogoAstar,
   LogoAstarDegens,
@@ -14,8 +15,16 @@ import { ASSETS_DICT } from './assets'
 export const TOP_ASSETS = [
   ASSETS_DICT.DOT,
   ASSETS_DICT.LDOT,
-  ASSETS_DICT.ACA,
   ASSETS_DICT.USDC,
+
+  //
+  ASSETS_DICT.LDOT,
+  ASSETS_DICT.USDC,
+  ASSETS_DICT.DOT,
+  //
+  ASSETS_DICT.USDC,
+  ASSETS_DICT.DOT,
+  ASSETS_DICT.LDOT,
 ]
 
 export const TOP_BACKERS: TopProps['backers'] = [
@@ -50,6 +59,12 @@ export const TOP_BACKERS: TopProps['backers'] = [
     Svg: LogoAu21,
     url: 'https://au21.capital',
     containerStyle: { maxHeight: '140px' },
+  },
+  {
+    name: 'Acala Network',
+    Svg: LogoAcala,
+    url: 'https://acala.network',
+    containerStyle: { maxHeight: '180px' },
   },
 ]
 
