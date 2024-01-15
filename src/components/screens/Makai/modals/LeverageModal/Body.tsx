@@ -52,23 +52,28 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     <WrapperDiv>
       <InfoDiv>
         <Description>
-          <p>{t`Description of LDOT token leverager function.`}</p>
+          <p>{t`Use Starlay to operate your DOT and lDOT in a novel way: Exchange your DOT for Starlay’s lDOT to maximize staking returns by leveraging additional lDOT against your original DOT holdings.`}</p>
+          <br />
+        </Description>
+        <Description>
+          <p>{t`This innovative approach aims to boost your staking rewards but comes with its own set of considerations. Firstly, be mindful that the borrowing rate for DOT on Starlay fluctuates, and it might not always be favorable compared to the rewards from staking. Secondly, the exchange rate between lDOT and DOT is not constant, meaning that a decrease in the lDOT/DOT ratio could lead to potential risks or losses when you decide to withdraw your investment. Lastly, there’s an inherent risk of liquidation with such positions. Stay informed about the specific liquidation thresholds for lDOT/DOT on the Starlay platform, usually visible in a prominent section of the user interface.`}</p>
+          <br />
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow 60 DOT with flashloan`}</p>
+            <p>{t`Flash borrow ${Number(supplyAmount) * Number(leverage)} DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap 60 dot into DOT`}</p>
+            <p>{t`Wrap ${Number(supplyAmount) * Number(leverage)} dot into DOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Borrow 50 DOT from lending pool`}</p>
+            <p>{t`Borrow ${Number(supplyAmount) * (Number(leverage) - 1)} DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan 60 DOT`}</p>
+            <p>{t`Pay flashloan ${Number(supplyAmount) * Number(leverage)} DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
@@ -179,13 +184,15 @@ const SupplyDiv = styled.div`
 const FlowInfo = styled.div`
   display: flex;
   flex-direction: column;
-  background-color: #131313;
-  padding: 8px;
+  background-color: #0f0f0f;
+  padding-top: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
 `
 
 const FlowDescription = styled.p`
   line-height: 1.5;
-  background-color: rgba(255,255,255,0.08);
+  background-color: rgba(255, 255, 255, 0.027);
   padding: 4px 4px;
   margin-bottom: 8px;
 `

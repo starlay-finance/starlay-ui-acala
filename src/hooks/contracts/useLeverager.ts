@@ -1,4 +1,3 @@
-import { InterestRate } from '@starlay-finance/contract-helpers'
 import { BigNumber } from '@starlay-finance/math-utils'
 import { getMarketConfigEVM } from 'src/libs/config'
 import { leveragerContract } from 'src/libs/leverager'
@@ -11,40 +10,36 @@ import { useTxHandler } from './txHandler'
 export const useLeverager = () => {
   const { data: provider } = useStaticRPCProviderEVM()
   const { account, signer } = useEVMWallet()
-  const { data: leverager } = useSWRImmutable(
-    provider && ['leverager', provider.chainId],
+  const { data: leveragerLdot } = useSWRImmutable(
+    provider && ['leverageLdot', provider.chainId],
     () => {
-      const { LEVERAGER } = getMarketConfigEVM(provider!.chainId).addresses
-      if (!LEVERAGER) return undefined
-      return leveragerContract(provider!, LEVERAGER)
+      const { LEVERAGER_LDOT } = getMarketConfigEVM(provider!.chainId).addresses
+      if (!LEVERAGER_LDOT) return undefined
+      return leveragerContract(provider!, LEVERAGER_LDOT)
     },
   )
 
   const { handleTx } = useTxHandler()
 
-  const leverage = async (param: {
+  const leverageLdot = async (param: {
+    borrowAmount: BigNumber
     amount: BigNumber
     asset: EthereumAddress
-    debtToken: EthereumAddress
-    borrowRatio: BigNumber
-    loopCount: number
   }) => {
-    if (!leverager || !account || !signer) throw new Error('Unexpected state')
+    if (!leveragerLdot || !account || !signer)
+      throw new Error('Unexpected state')
     return handleTx(
-      await leverager.loop({
+      await leveragerLdot.leverageDot({
         user: account,
-        reserve: param.asset,
-        amount: param.amount.toString(),
-        debtToken: param.debtToken,
-        interestRateMode: InterestRate.Variable,
-        borrowRatio: param.borrowRatio.toFixed(4, BigNumber.ROUND_FLOOR),
-        loopCount: param.loopCount.toFixed(0),
+        token: param.asset,
+        borrow_dot_amount: param.borrowAmount.toString(),
+        repay_dot_amount: param.amount.toString(),
       }),
       signer,
     )
   }
 
   return {
-    leverage,
+    leverageLdot,
   }
 }

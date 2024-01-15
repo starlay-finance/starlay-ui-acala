@@ -27,7 +27,7 @@ export type EVMMarketConfig = {
     REPAY_WITH_COLLATERAL_ADAPTER?: EthereumAddress
     FAUCET?: EthereumAddress
     PERMISSION_MANAGER?: EthereumAddress
-    LEVERAGER?: EthereumAddress
+    LEVERAGER_LDOT?: EthereumAddress
     LAUNCHPAD?: EthereumAddress
   }
 }
@@ -45,6 +45,7 @@ export const MARKET_CONFIGS: {
         '0x5AA0f1456dA50828F6eFb5B751F51a402bB25bBD',
       INCENTIVES_CONTROLLER: '0x6b26AB9ABB4f8c2354EB0360602490d72a187907',
       LENDING_POOL: '0x2669ff3a081ddA63E7c353b6dF64fA33050A9D6D',
+      LEVERAGER_LDOT: '0xcb65Cc8c5d6F97B3c08A752B7d12d7E41D04E777',
     },
   },
 } as const
