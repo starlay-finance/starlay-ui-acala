@@ -39,7 +39,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const [supplyAmount, setSupplyAmount] = useState('')
 
   const maxLeverage = valueToBigNumber('10')
-  const [leverage, setLeverage] = useState<BigNumber>(maxLeverage)
+  const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('3'))
 
   const estimation = estimateLeverager({
     amount: formattedToBigNumber(supplyAmount),
