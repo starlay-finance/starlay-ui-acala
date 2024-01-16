@@ -3,7 +3,7 @@ import { FC } from 'react'
 
 import { requireSupportedChain } from 'src/components/hoc/requireSupportedChain'
 import { DefaultModalContent } from 'src/components/parts/Modal/base'
-import { AssetLabel } from 'src/components/parts/Modal/parts'
+import { ItemLabelPair } from 'src/components/parts/Modal/parts'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { ModalContentProps, useModalDialog } from 'src/hooks/useModal'
 import { useTracking } from 'src/hooks/useTracking'
@@ -25,7 +25,7 @@ export const Leverager: FC<
 
   return (
     <DefaultModalContent
-      headerNode={<AssetLabel asset={asset} />}
+      headerNode={<ItemLabelPair label={`Leverager ${asset.symbol}/LDOT`} />}
       bodyNode={
         <LeveragerModalBody
           {...props}

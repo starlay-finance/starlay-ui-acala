@@ -3,6 +3,7 @@ import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
 import debounce from 'debounce'
 import { FC, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
+import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { blue, darkRed, lightYellow } from 'src/styles/colors'
 import { breakpoint } from 'src/styles/mixins'
@@ -79,6 +80,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
       </InfoDiv>
       <ActionDiv>
         <SupplyDiv>
+          <InfoTitle>Asset:</InfoTitle>
+          <AssetLabel asset={asset} label={asset.symbol} />
+        </SupplyDiv>
+        <SupplyDiv style={{ marginTop: '24px' }}>
           <InfoTitle>Supply:</InfoTitle>
           <AmountInput
             value={supplyAmount}
@@ -121,7 +126,7 @@ const Description = styled.p`
 
 const WrapperDiv = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   /* padding: 24px 18px; */
   ${SimpleCtaButton} {
     margin-top: 16px;
