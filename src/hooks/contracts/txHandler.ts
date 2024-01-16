@@ -2,6 +2,7 @@ import { t } from '@lingui/macro'
 import {
   eEthereumTxType,
   EthereumTransactionTypeExtended,
+  transactionType,
 } from '@starlay-finance/contract-helpers'
 import { serializeError } from 'eth-rpc-errors'
 import { BigNumber, ethers } from 'ethers'
@@ -27,6 +28,15 @@ export const useTxHandler = () => {
     mutateWalletBalance()
   }
 
+  const removeGasPriceFromTx = async (
+    signer: ethers.providers.JsonRpcSigner,
+    _tx: transactionType,
+  ): Promise<ethers.providers.TransactionResponse> => {
+    const { gasLimit, gasPrice, ...tx } = _tx
+
+    return signer.sendTransaction(tx)
+  }
+
   const handleTx = async (
     txs: EthereumTransactionTypeExtended[],
     signer: ethers.providers.JsonRpcSigner,
@@ -49,7 +59,7 @@ export const useTxHandler = () => {
           message: t`Approve sending your asset...`,
         })
         const tx = await erc20ApprovalTx.tx()
-        const approveRes = await signer.sendTransaction({ ...tx })
+        const approveRes = await removeGasPriceFromTx(signer, tx)
         open({
           type: 'Loading',
           title: t`Transaction Pending`,
@@ -64,7 +74,7 @@ export const useTxHandler = () => {
           message: t`Approve the contract to borrow ERC-20 assets on your credit.`,
         })
         const tx = await debtErc20ApprovalTx.tx()
-        const approveRes = await signer.sendTransaction({ ...tx })
+        const approveRes = await removeGasPriceFromTx(signer, tx)
         open({
           type: 'Loading',
           title: t`Transaction Pending`,
@@ -79,9 +89,10 @@ export const useTxHandler = () => {
           message: t`Confirm the transaction.`,
         })
         const tx = await actionTx.tx()
-        const depostRes = await signer.sendTransaction({
+
+        const depostRes = await removeGasPriceFromTx(signer, {
           ...tx,
-          value: tx.value ? BigNumber.from(tx.value) : undefined,
+          value: tx.value ? BigNumber.from(tx.value).toString() : undefined,
         })
         open({
           type: 'Loading',
