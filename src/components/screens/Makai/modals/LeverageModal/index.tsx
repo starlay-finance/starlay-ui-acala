@@ -11,13 +11,13 @@ import { EthereumAddress } from 'src/types/web3'
 import { LeveragerModalBody, LeveragerModalBodyProps } from './Body'
 
 export const Leverager: FC<
-  ModalContentProps<Omit<LeveragerModalBodyProps, 'startLeverager'>>
+  ModalContentProps<Omit<Omit<LeveragerModalBodyProps, 'startLeverager'>, 'getStatusAfterTransaction'>>
 > = ({ close, ...props }) => {
-  const { leverageLdot } = useLeverager()
+  const { leverageLdot, getStatusAfterTransaction } = useLeverager()
   const { withTracking } = useTracking()
   const { asset } = props
 
-  const loopWithTracking = withTracking<{
+  const leverageWithTracking = withTracking<{
     asset: EthereumAddress
     amount: BigNumber
     borrowAmount: BigNumber;
@@ -30,12 +30,16 @@ export const Leverager: FC<
         <LeveragerModalBody
           {...props}
           startLeverager={(amount, leverage) =>
-            loopWithTracking({
+            leverageWithTracking({
               amount,
               asset: asset.underlyingAsset as EthereumAddress,
               borrowAmount: amount.multipliedBy(leverage),
             })
           }
+          getStatusAfterTransaction={(amount, leverage) => getStatusAfterTransaction({
+            amount,
+            borrowAmount: amount.multipliedBy(leverage),
+          })}
         />
       }
       closeModal={close}

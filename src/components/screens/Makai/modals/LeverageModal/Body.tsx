@@ -1,16 +1,18 @@
 import { t } from '@lingui/macro'
-import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
+import { BigNumber, normalizeBN, valueToBigNumber } from '@starlay-finance/math-utils'
 import debounce from 'debounce'
-import { FC, useState } from 'react'
+import { FC, useEffect, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
-import { blue, darkRed, lightYellow } from 'src/styles/colors'
+import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
+import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { LeveragerEstimationParam, estimateLeverager } from 'src/utils/estimationHelper'
 import {
   BN_ZERO,
   formatAmt,
+  formatUSD,
   formattedToBigNumber
 } from 'src/utils/number'
 import styled from 'styled-components'
@@ -23,11 +25,13 @@ import {
 
 export type LeveragerModalBodyProps = Omit<LeveragerEstimationParam, 'amount'> & {
   startLeverager: (amount: BigNumber, leverage: BigNumber) => Promise<any>
+  getStatusAfterTransaction: (amount: BigNumber, leverage: BigNumber) => Promise<any>
   max?: boolean
 }
 
 export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   startLeverager,
+  getStatusAfterTransaction,
   max,
   ...estimationParams
 }) => {
@@ -41,6 +45,9 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
 
   const maxLeverage = valueToBigNumber('10')
   const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('3'))
+  const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
+  const [totalDebtAfterTx, setTotalDebtAfterTx] = useState('')
+  const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
 
   const estimation = estimateLeverager({
     amount: formattedToBigNumber(supplyAmount),
@@ -48,6 +55,24 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     userAssetBalance,
     leverage,
   })
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Your asynchronous code here
+        const result = await getStatusAfterTransaction(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage)
+        console.log(result);
+        setTotalCollateralAfterTx(result.totalCollateralAfterTx)
+        setTotalDebtAfterTx(result.totalDebtAfterTx)
+        setHealthFactorAfterTx(result.healthFactorAfterTx)
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    if (!estimation.unavailableReason)
+      fetchData();
+
+  }, [leverage, supplyAmount])
 
   return (
     <WrapperDiv>
@@ -101,18 +126,38 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
           sliderColors={[blue, lightYellow, darkRed]}
           customLabel={t`Leverage`}
         />
-
+        <Balance
+          label={t`Wallet Balance`}
+          balance={inWallet}
+          symbol={displaySymbol || symbol}
+        />
+        {!estimation.unavailableReason && !!totalCollateralAfterTx && !!totalDebtAfterTx && !!healthFactorAfterTx &&
+          <>
+            <StatusDiv>
+              <p>{t`Final state after recipe:`}</p>
+            </StatusDiv>
+            <StatusInfo>
+              <ResultDiv>
+                <span>{t`Collateral:`}</span>
+                <span>{formatUSD(normalizeBN(valueToBigNumber(totalCollateralAfterTx), 18), { decimalPlaces: 2 })}</span>
+              </ResultDiv>
+              <ResultDiv>
+                <span>{t`Debt:`}</span>
+                <span>{formatUSD(normalizeBN(valueToBigNumber(totalDebtAfterTx), 18), { decimalPlaces: 2 })}</span>
+              </ResultDiv>
+              <ResultDiv>
+                <span>{t`Health Factor:`}</span>
+                <span>{formatAmt(normalizeBN(valueToBigNumber(healthFactorAfterTx), 18), { decimalPlaces: 2 })}</span>
+              </ResultDiv>
+            </StatusInfo>
+          </>
+        }
         <SimpleCtaButton
           onClick={debounce(() => startLeverager(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage), 2000, { immediate: true })}
           disabled={!!estimation.unavailableReason}
         >
           {estimation.unavailableReason || t`Start leverager`}
         </SimpleCtaButton>
-        <Balance
-          label={t`Wallet Balance`}
-          balance={inWallet}
-          symbol={displaySymbol || symbol}
-        />
       </ActionDiv>
     </WrapperDiv>
   )
@@ -122,6 +167,14 @@ const RATIO_LIST = [{ value: 2 }, { value: 4 }]
 
 const Description = styled.p`
   line-height: 1.5;
+`
+const StatusDiv = styled.div`
+  margin-top: 24px;
+  p {
+    font-size: 18px;
+    font-weight: ${fontWeightHeavy};
+    color: ${offWhite}
+  }
 `
 
 const WrapperDiv = styled.div`
@@ -195,6 +248,15 @@ const FlowInfo = styled.div`
   padding-right: 8px;
 `
 
+const StatusInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+  background-color: #0f0f0f;
+  margin-top: 24px;
+  padding: 16px;
+`
+
 const FlowDescription = styled.p`
   line-height: 1.5;
   background-color: rgba(255, 255, 255, 0.027);
@@ -220,5 +282,13 @@ const ActionDiv = styled.div`
   padding: 24px 18px;
   @media ${breakpoint.xl} {
     width: 45%;
+  }
+`
+
+const ResultDiv = styled.div`
+  display: flex;
+  justify-content: space-between;
+  span:last-child {
+    color: ${offWhite};
   }
 `

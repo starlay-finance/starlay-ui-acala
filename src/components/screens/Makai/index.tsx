@@ -9,6 +9,7 @@ import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint, contentMaxWidthCssVar } from 'src/styles/mixins'
 import { APP } from 'src/utils/routes'
 import styled from 'styled-components'
+import { MakaiInfo } from './MakaiInfo'
 import { MakaiMarkets } from './MakaiMarkets'
 
 export const Makai = () => {
@@ -24,6 +25,7 @@ export const Makai = () => {
       <Main>
         <AppBackground />
         <Content>
+          <MakaiInfo />
           <MakaiMarkets />
         </Content>
         <AppMenu isOpen={isMenuOpen} close={() => setMenuOpen(false)} />
@@ -47,6 +49,7 @@ const Main = styled.main`
   ${Content} {
     margin-top: 40px;
     display: flex;
+    flex-direction: column;
     column-gap: 24px;
     ${MakaiMarkets} {
       flex: 1;

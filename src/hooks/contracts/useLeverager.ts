@@ -38,8 +38,22 @@ export const useLeverager = () => {
       signer,
     )
   }
+  const getStatusAfterTransaction = async (param: {
+    borrowAmount: BigNumber
+    amount: BigNumber
+  }) => {
+    if (!leveragerLdot || !account) throw new Error('Unexpected state')
+    const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
+      await leveragerLdot.getStatusAfterTransaction(
+        account,
+        param.borrowAmount.toString(),
+        param.amount.toString(),
+      )
+    return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+  }
 
   return {
     leverageLdot,
+    getStatusAfterTransaction,
   }
 }
