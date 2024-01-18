@@ -3,6 +3,7 @@ import { BigNumber, normalizeBN, valueToBigNumber } from '@starlay-finance/math-
 import debounce from 'debounce'
 import { FC, useEffect, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
+import { ShimmerPlaceholder } from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
@@ -46,6 +47,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const { symbol, displaySymbol } = asset
   const { inWallet } = userAssetBalance
   const [supplyAmount, setSupplyAmount] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('1.1'))
   const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
@@ -74,12 +76,15 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setIsLoading(true)
         // Your asynchronous code here
         const result = await getStatusAfterTransaction(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage)
         setTotalCollateralAfterTx(result.totalCollateralAfterTx)
         setTotalDebtAfterTx(result.totalDebtAfterTx)
         setHealthFactorAfterTx(result.healthFactorAfterTx)
+        setIsLoading(false)
       } catch (error) {
+        setIsLoading(false)
         console.error('Error fetching data:', error);
       }
     };
@@ -104,7 +109,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
             <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} dot into DOT`}</p>
+            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT into LDOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
@@ -131,14 +136,14 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
             significantDigits={asset.decimals}
           />
         </SupplyDiv>
-        {maxLeverage &&
+        {maxLeverage ?
           <RatioSliderControl
             setValue={setLeverage}
             current={leverage}
             max={valueToBigNumber((maxLeverage || 1).toString())}
             sliderColors={[blue, lightYellow, darkRed]}
             customLabel={t`Leverage`}
-          />
+          /> : <ShimmerPlaceholder />
         }
         <Balance
           label={t`Wallet Balance`}
@@ -266,7 +271,7 @@ const StatusInfo = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 12px;
-  background-color: #0f0f0f;
+  background-color: rgba(255, 255, 255, 0.027);
   margin-top: 24px;
   padding: 16px;
 `
