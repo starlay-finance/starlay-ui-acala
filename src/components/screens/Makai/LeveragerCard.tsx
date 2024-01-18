@@ -52,7 +52,7 @@ export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, balan
       maxApy={
         {
           label: t`Max APY:`,
-          value: `+14.16%`,
+          value: `-`,
           tooltip: t`Estimated APY at maximum available leverage`,
         }
       }

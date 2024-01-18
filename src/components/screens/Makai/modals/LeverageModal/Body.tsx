@@ -168,6 +168,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                 <span>{t`Health Factor:`}</span>
                 <span>{formatAmt(normalizeBN(valueToBigNumber(healthFactorAfterTx), 18), { decimalPlaces: 2 })}</span>
               </ResultDiv>
+              <ResultDiv>
+                <span>{t`Net APY:`}</span>
+                <span>-</span>
+              </ResultDiv>
             </StatusInfo>
           </>
         }
