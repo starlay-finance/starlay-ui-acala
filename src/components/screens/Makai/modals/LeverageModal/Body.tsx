@@ -127,31 +127,27 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT with flashloan`}</p>
+              } DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT into LDOT`}</p>
+              } DOT into LDOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Borrow ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               (Number(leverage) - 1)
-            } DOT from lending pool`}</p>
+              } DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Pay flashloan ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT`}</p>
+              } DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
@@ -252,9 +248,11 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   )
 }
 
-const Description = styled.p`
-  line-height: 1.5;
-  color: ${offWhite};
+const Description = styled.div`
+ p {
+   line-height: 1.5;
+   color: ${offWhite};
+ }
 `
 const StatusDiv = styled.div`
   margin-top: 24px;
@@ -345,12 +343,14 @@ const StatusInfo = styled.div`
   padding: 16px;
 `
 
-const FlowDescription = styled.p`
-  line-height: 1.5;
+const FlowDescription = styled.div`
+  p {
+    line-height: 1.5;
+    color: ${offWhite};
+  }
   background-color: rgba(255, 255, 255, 0.027);
   padding: 4px 4px;
   margin-bottom: 8px;
-  color: ${offWhite};
 `
 
 const InfoTitle = styled.p`
