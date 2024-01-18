@@ -8,6 +8,7 @@ import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioContro
 import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
 import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
+import { AssetMarketData } from 'src/types/models'
 import { LeveragerEstimationParam, estimateLeverager } from 'src/utils/estimationHelper'
 import {
   BN_ZERO,
@@ -26,12 +27,15 @@ import {
 export type LeveragerModalBodyProps = Omit<LeveragerEstimationParam, 'amount'> & {
   startLeverager: (amount: BigNumber, leverage: BigNumber) => Promise<any>
   getStatusAfterTransaction: (amount: BigNumber, leverage: BigNumber) => Promise<any>
+  getLTV: () => Promise<string>
   max?: boolean
+  collateralAsset?: AssetMarketData
 }
 
 export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   startLeverager,
   getStatusAfterTransaction,
+  getLTV,
   max,
   ...estimationParams
 }) => {
@@ -43,25 +47,35 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const { inWallet } = userAssetBalance
   const [supplyAmount, setSupplyAmount] = useState('')
 
-  const maxLeverage = valueToBigNumber('10')
-  const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('3'))
+  const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('1.1'))
   const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
   const [totalDebtAfterTx, setTotalDebtAfterTx] = useState('')
   const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
-
+  const [maxLeverage, setMaxLeverage] = useState<number>()
   const estimation = estimateLeverager({
     amount: formattedToBigNumber(supplyAmount),
     asset,
     userAssetBalance,
     leverage,
   })
+  useEffect(() => {
+    const fetchLtv = async () => {
+      try {
+        const result = await getLTV()
+        setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchLtv();
+
+  }, [])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Your asynchronous code here
         const result = await getStatusAfterTransaction(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage)
-        console.log(result);
         setTotalCollateralAfterTx(result.totalCollateralAfterTx)
         setTotalDebtAfterTx(result.totalDebtAfterTx)
         setHealthFactorAfterTx(result.healthFactorAfterTx)
@@ -117,15 +131,15 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
             significantDigits={asset.decimals}
           />
         </SupplyDiv>
-        <RatioSliderControl
-          label={t`Leverage`}
-          options={RATIO_LIST.concat({ value: maxLeverage.toNumber() })}
-          setValue={setLeverage}
-          current={leverage}
-          max={maxLeverage}
-          sliderColors={[blue, lightYellow, darkRed]}
-          customLabel={t`Leverage`}
-        />
+        {maxLeverage &&
+          <RatioSliderControl
+            setValue={setLeverage}
+            current={leverage}
+            max={valueToBigNumber((maxLeverage || 1).toString())}
+            sliderColors={[blue, lightYellow, darkRed]}
+            customLabel={t`Leverage`}
+          />
+        }
         <Balance
           label={t`Wallet Balance`}
           balance={inWallet}

@@ -1,16 +1,18 @@
 import { t } from '@lingui/macro'
 import { BigNumber } from '@starlay-finance/math-utils'
 import { StaticImageData } from 'next/image'
-import { FC, ReactNode } from 'react'
+import { FC, ReactNode, useEffect, useState } from 'react'
 import { Image } from 'src/components/elements/Image'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
+import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { darkGray, primary, purple } from 'src/styles/colors'
 import {
   fontWeightMedium,
   fontWeightSemiBold
 } from 'src/styles/font'
-import { AssetSymbol } from 'src/types/models'
+import { AssetMarketData, AssetSymbol } from 'src/types/models'
+import { EthereumAddress } from 'src/types/web3'
 import {
   BN_ZERO,
   formatAmt,
@@ -18,21 +20,34 @@ import {
 import styled from 'styled-components'
 
 type CardProps = {
+  collateralAsset?: AssetMarketData
   icon: StaticImageData
-  collateralIcon: StaticImageData
   symbol: AssetSymbol
-  collateralSymbol: string
   balance: BigNumber
   onClick: VoidFunction
 }
 
-export const LeveragerCard = asStyled<CardProps>(({ icon, collateralIcon, collateralSymbol, balance, symbol, onClick, className }) => {
+export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, balance, symbol, onClick, className }) => {
+  const { getLTV } = useLeverager()
+  const [maxLeverage, setMaxLeverage] = useState<number>()
+  useEffect(() => {
+    const fetchLtv = async () => {
+      try {
+        const result = await getLTV({ asset: collateralAsset?.underlyingAsset as EthereumAddress })
+        setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchLtv();
+
+  }, [])
   return (
     <LeveragerCardComponent
       icon={icon}
       symbol={symbol}
-      collateralSymbol={collateralSymbol}
-      collateralIcon={collateralIcon}
+      collateralSymbol={collateralAsset?.symbol!}
+      collateralIcon={collateralAsset?.icon!}
       className={className}
       maxApy={
         {
@@ -48,12 +63,12 @@ export const LeveragerCard = asStyled<CardProps>(({ icon, collateralIcon, collat
         },
         {
           label: t`Position`,
-          value: `${collateralSymbol}/${symbol}`,
+          value: `${collateralAsset?.symbol}/${symbol}`,
           tooltip: t`Combination of assets used (collateral/debt)`,
         },
         {
           label: t`Max Leverage`,
-          value: '10X',
+          value: maxLeverage ? `${maxLeverage}X` : '-',
           tooltip: t`Maximum possible leverage for this combination of assets.`,
         },
       ]}

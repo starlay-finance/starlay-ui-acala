@@ -4,7 +4,11 @@ import { Asset, AssetSymbol } from 'src/types/models'
 
 export const LISTED_ASSET_SYMBOLS = ['ACA', 'LDOT', 'USDC', 'DOT'] as const
 export const LEVERAGEABLE_ASSET_SYMBOLS = ['DOT']
-export const LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS = { DOT: 'LDOT' }
+export const LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS: {
+  [
+    key: typeof LEVERAGEABLE_ASSET_SYMBOLS[number]
+  ]: typeof LISTED_ASSET_SYMBOLS[number]
+} = { DOT: 'LDOT' }
 
 export const SYMBOL_ORDER: Record<AssetSymbol, number> =
   LISTED_ASSET_SYMBOLS.reduce(

@@ -38,6 +38,20 @@ type RatioControlProps = {
   disabled?: boolean
 }
 
+type RatioSliderProps = {
+  setValue: (ratio: BigNumber) => void
+  current: BigNumber
+
+  min?: number
+  max: BigNumber
+  step?: number
+  customLabel: string
+  sliderColors: Color[]
+  showValue?: boolean
+  showValueOnCustom?: boolean
+  disabled?: boolean
+}
+
 export const RatioControl = asStyled<RatioControlProps>(
   ({
     className,
@@ -163,7 +177,7 @@ export const RatioControl = asStyled<RatioControlProps>(
   border-bottom: 1px solid ${offWhite}3a;
 `
 
-export const RatioSliderControl = asStyled<RatioControlProps>(
+export const RatioSliderControl = asStyled<RatioSliderProps>(
   ({
     className,
     current,

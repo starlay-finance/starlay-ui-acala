@@ -1,6 +1,6 @@
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
-import { LEVERAGEABLE_ASSET_SYMBOLS } from 'src/constants/assets'
+import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
@@ -31,13 +31,13 @@ export const MakaiMarkets = asStyled(({ className }) => {
             <LeveragerCard
               key={asset.symbol}
               icon={asset.icon}
-              collateralIcon={asset.symbol === 'DOT' && assets?.find((each) => each.symbol === 'LDOT')?.icon}
+              collateralAsset={assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])}
               symbol={asset.symbol || asset.displaySymbol}
-              collateralSymbol={asset.symbol === 'DOT' ? 'LDOT' : ''}
               balance={balances[asset.symbol]}
               onClick={userData
                 ? () =>
                   openLeveragerModal({
+                    collateralAsset: assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol]),
                     asset,
                     userAssetBalance: {
                       ...userData.balanceByAsset[asset.symbol],

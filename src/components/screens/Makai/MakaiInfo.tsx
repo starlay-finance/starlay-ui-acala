@@ -9,9 +9,9 @@ import styled from 'styled-components'
 export const MakaiInfo = asStyled(({ className }) => {
   return (
     <MakaiInfoSection className={className}>
-      <InfoTitle>Leveraged LDOT Staking</InfoTitle>
-      <InfoContent>Receive increased staking rewards by using liquid staking tokens such as stETH, rETH and cbETH as collateral and leveraging them against ETH through Compound, Aave or Morpho.</InfoContent>
-      <InfoLink><Link href="https://apps.acala.network/swap">{t`Learn more`}</Link></InfoLink>
+      <InfoTitle>Leveraged DOT Staking on Starlay</InfoTitle>
+      <InfoContent>Enhance your staking rewards by utilizing liquid staking tokens such as LDOT and DOT as collateral. Leverage these assets against DOT on Starlay, capitalizing on the platform&apos;s robust features to maximize your staking efficiency and returns.</InfoContent>
+      <InfoLink><Link href="https://www.notion.so/asynmatrix/LSTs-and-leveraged-staking-strategies-cacf1d3683f54cfa93158f4953926fed">{t`Learn more`}</Link></InfoLink>
     </MakaiInfoSection>
   )
 })``

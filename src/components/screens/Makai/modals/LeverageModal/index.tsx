@@ -4,18 +4,25 @@ import { FC } from 'react'
 import { requireSupportedChain } from 'src/components/hoc/requireSupportedChain'
 import { DefaultModalContent } from 'src/components/parts/Modal/base'
 import { ItemLabelPair } from 'src/components/parts/Modal/parts'
+import { LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
+import { useMarketData } from 'src/hooks/useMarketData'
 import { ModalContentProps, useModalDialog } from 'src/hooks/useModal'
 import { useTracking } from 'src/hooks/useTracking'
 import { EthereumAddress } from 'src/types/web3'
 import { LeveragerModalBody, LeveragerModalBodyProps } from './Body'
 
 export const Leverager: FC<
-  ModalContentProps<Omit<Omit<LeveragerModalBodyProps, 'startLeverager'>, 'getStatusAfterTransaction'>>
+  ModalContentProps<Omit<Omit<Omit<LeveragerModalBodyProps, 'startLeverager'>, 'getStatusAfterTransaction'>, 'getLTV'>>
 > = ({ close, ...props }) => {
-  const { leverageLdot, getStatusAfterTransaction } = useLeverager()
-  const { withTracking } = useTracking()
+  const { data: marketData } = useMarketData()
   const { asset } = props
+  const {
+    assets,
+  } = marketData || {}
+  const collateralAsset = assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])
+  const { leverageLdot, getStatusAfterTransaction, getLTV } = useLeverager()
+  const { withTracking } = useTracking()
 
   const leverageWithTracking = withTracking<{
     asset: EthereumAddress
@@ -38,7 +45,11 @@ export const Leverager: FC<
           }
           getStatusAfterTransaction={(amount, leverage) => getStatusAfterTransaction({
             amount,
+            asset: asset.underlyingAsset as EthereumAddress,
             borrowAmount: amount.multipliedBy(leverage),
+          })}
+          getLTV={() => getLTV({
+            asset: collateralAsset?.underlyingAsset as EthereumAddress,
           })}
         />
       }
