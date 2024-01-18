@@ -1,4 +1,5 @@
 import { BigNumber } from '@starlay-finance/math-utils'
+import { useCallback } from 'react'
 import { getMarketConfigEVM } from 'src/libs/config'
 import { leveragerContract } from 'src/libs/leverager'
 import { EthereumAddress } from 'src/types/web3'
@@ -21,44 +22,61 @@ export const useLeverager = () => {
 
   const { handleTx } = useTxHandler()
 
-  const leverageLdot = async (param: {
-    borrowAmount: BigNumber
-    amount: BigNumber
-    asset: EthereumAddress
-  }) => {
-    if (!leveragerLdot || !account || !signer)
-      throw new Error('Unexpected state')
-    return handleTx(
-      await leveragerLdot.leverageDot({
-        user: account,
-        token: param.asset,
-        borrow_dot_amount: param.borrowAmount.toString(),
-        repay_dot_amount: param.amount.toString(),
-      }),
-      signer,
-    )
-  }
-  const getStatusAfterTransaction = async (param: {
-    borrowAmount: BigNumber
-    amount: BigNumber
-    asset: EthereumAddress
-  }) => {
-    if (!leveragerLdot || !account) throw new Error('Unexpected state')
-    const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
-      await leveragerLdot.getStatusAfterTransaction(
-        account,
-        param.asset,
-        param.borrowAmount.toString(),
-        param.amount.toString(),
+  const leverageLdot = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account || !signer)
+        throw new Error('Unexpected state')
+      return handleTx(
+        await leveragerLdot.leverageDot({
+          user: account,
+          token: param.asset,
+          borrow_dot_amount: param.borrowAmount.toString(),
+          repay_dot_amount: param.amount.toString(),
+        }),
+        signer,
       )
-    return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
-  }
+    },
+    [account, handleTx, leveragerLdot, signer],
+  )
 
-  const getLTV = async (param: { asset: EthereumAddress }) => {
-    if (!leveragerLdot) throw new Error('Unexpected state')
-    const ltv = await leveragerLdot.ltv(param.asset)
-    return ltv
-  }
+  const getStatusAfterTransaction = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account)
+        return {
+          totalCollateralAfterTx: '0',
+          totalDebtAfterTx: '0',
+          healthFactorAfterTx: '0',
+        }
+      const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
+        await leveragerLdot.getStatusAfterTransaction(
+          account,
+          param.asset,
+          param.borrowAmount.toString(),
+          param.amount.toString(),
+        )
+      return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+    },
+    [account, leveragerLdot],
+  )
+
+  const getLTV = useCallback(
+    async (param: { asset: EthereumAddress }) => {
+      if (!leveragerLdot) {
+        return '0'
+      }
+      const ltv = await leveragerLdot.ltv(param.asset)
+      return ltv
+    },
+    [leveragerLdot],
+  )
 
   return {
     leverageLdot,

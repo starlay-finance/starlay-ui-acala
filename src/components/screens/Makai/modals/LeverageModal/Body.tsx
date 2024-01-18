@@ -1,5 +1,9 @@
 import { t } from '@lingui/macro'
-import { BigNumber, normalizeBN, valueToBigNumber } from '@starlay-finance/math-utils'
+import {
+  BigNumber,
+  normalizeBN,
+  valueToBigNumber,
+} from '@starlay-finance/math-utils'
 import debounce from 'debounce'
 import { FC, useEffect, useMemo, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
@@ -11,24 +15,33 @@ import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
 import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetMarketData } from 'src/types/models'
-import { LeveragerEstimationParam, estimateLeverager } from 'src/utils/estimationHelper'
+import {
+  LeveragerEstimationParam,
+  estimateLeverager,
+} from 'src/utils/estimationHelper'
 import {
   BN_ZERO,
   formatAmt,
   formatUSD,
-  formattedToBigNumber
+  formattedToBigNumber,
 } from 'src/utils/number'
 import styled from 'styled-components'
 import {
   Action,
   AmountInput,
   Balance,
-  Control
+  Control,
 } from '../../../Dashboard/modals/parts'
 
-export type LeveragerModalBodyProps = Omit<LeveragerEstimationParam, 'amount'> & {
+export type LeveragerModalBodyProps = Omit<
+  LeveragerEstimationParam,
+  'amount'
+> & {
   startLeverager: (amount: BigNumber, leverage: BigNumber) => Promise<any>
-  getStatusAfterTransaction: (amount: BigNumber, leverage: BigNumber) => Promise<any>
+  getStatusAfterTransaction: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
   getLTV: () => Promise<string>
   max?: boolean
   collateralAsset?: AssetMarketData
@@ -41,16 +54,12 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   max,
   ...estimationParams
 }) => {
-  const {
-    asset,
-    userAssetBalance,
-  } = estimationParams
+  const { asset, userAssetBalance } = estimationParams
   const { symbol, displaySymbol, variableBorrowAPY } = asset
   const { inWallet } = userAssetBalance
   const { apy } = useLdotApy()
 
   const [supplyAmount, setSupplyAmount] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
 
   const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('1.1'))
   const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
@@ -65,10 +74,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   })
 
   const netApy = useMemo(() => {
-    const netApy = leverage.toNumber() * (apy - variableBorrowAPY.toNumber()) * 100
+    const netApy =
+      leverage.toNumber() * (apy - variableBorrowAPY.toNumber()) * 100
     return netApy > 0 ? netApy : 0
   }, [leverage, apy, variableBorrowAPY])
-
 
   useEffect(() => {
     const fetchLtv = async () => {
@@ -76,32 +85,34 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         const result = await getLTV()
         setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error)
       }
-    };
-    fetchLtv();
-
-  }, [])
+    }
+    fetchLtv()
+  }, [getLTV])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true)
         // Your asynchronous code here
-        const result = await getStatusAfterTransaction(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage)
+        const result = await getStatusAfterTransaction(
+          formattedToBigNumber(supplyAmount) || BN_ZERO,
+          leverage,
+        )
         setTotalCollateralAfterTx(result.totalCollateralAfterTx)
         setTotalDebtAfterTx(result.totalDebtAfterTx)
         setHealthFactorAfterTx(result.healthFactorAfterTx)
-        setIsLoading(false)
       } catch (error) {
-        setIsLoading(false)
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error)
       }
-    };
-    if (!estimation.unavailableReason)
-      fetchData();
-
-  }, [leverage, supplyAmount])
+    }
+    if (!estimation.unavailableReason) fetchData()
+  }, [
+    estimation.unavailableReason,
+    getStatusAfterTransaction,
+    leverage,
+    supplyAmount,
+  ])
 
   return (
     <WrapperDiv>
@@ -116,19 +127,31 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT with flashloan`}</p>
+            <p>{t`Flash borrow ${
+              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+              Number(leverage)
+            } DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT into LDOT`}</p>
+            <p>{t`Wrap ${
+              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+              Number(leverage)
+            } DOT into LDOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * (Number(leverage) - 1)} DOT from lending pool`}</p>
+            <p>{t`Borrow ${
+              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+              (Number(leverage) - 1)
+            } DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) * Number(leverage)} DOT`}</p>
+            <p>{t`Pay flashloan ${
+              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+              Number(leverage)
+            } DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
@@ -146,47 +169,80 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
             significantDigits={asset.decimals}
           />
         </SupplyDiv>
-        {maxLeverage ?
+        {maxLeverage ? (
           <RatioSliderControl
             setValue={setLeverage}
             current={leverage}
             max={valueToBigNumber((maxLeverage || 1).toString())}
             sliderColors={[blue, lightYellow, darkRed]}
             customLabel={t`Leverage`}
-          /> : <ShimmerPlaceholder />
-        }
+          />
+        ) : (
+          <ShimmerPlaceholder />
+        )}
         <Balance
           label={t`Wallet Balance`}
           balance={inWallet}
           symbol={displaySymbol || symbol}
         />
-        {!estimation.unavailableReason && !!totalCollateralAfterTx && !!totalDebtAfterTx && !!healthFactorAfterTx &&
-          <>
-            <StatusDiv>
-              <p>{t`Final state after recipe:`}</p>
-            </StatusDiv>
-            <StatusInfo>
-              <ResultDiv>
-                <span>{t`Collateral:`}</span>
-                <span>{formatUSD(normalizeBN(valueToBigNumber(totalCollateralAfterTx), 18), { decimalPlaces: 2 })}</span>
-              </ResultDiv>
-              <ResultDiv>
-                <span>{t`Debt:`}</span>
-                <span>{formatUSD(normalizeBN(valueToBigNumber(totalDebtAfterTx), 18), { decimalPlaces: 2 })}</span>
-              </ResultDiv>
-              <ResultDiv>
-                <span>{t`Health Factor:`}</span>
-                <span>{formatAmt(normalizeBN(valueToBigNumber(healthFactorAfterTx), 18), { decimalPlaces: 2 })}</span>
-              </ResultDiv>
-              <ResultDiv>
-                <span>{t`Net APY:`}</span>
-                <span>{formatAmt(valueToBigNumber(netApy) || BN_ZERO, { symbol: "%", decimalPlaces: 2 })}</span>
-              </ResultDiv>
-            </StatusInfo>
-          </>
-        }
+        {!estimation.unavailableReason &&
+          !!totalCollateralAfterTx &&
+          !!totalDebtAfterTx &&
+          !!healthFactorAfterTx && (
+            <>
+              <StatusDiv>
+                <p>{t`Final state after recipe:`}</p>
+              </StatusDiv>
+              <StatusInfo>
+                <ResultDiv>
+                  <span>{t`Collateral:`}</span>
+                  <span>
+                    {formatUSD(
+                      normalizeBN(valueToBigNumber(totalCollateralAfterTx), 18),
+                      { decimalPlaces: 2 },
+                    )}
+                  </span>
+                </ResultDiv>
+                <ResultDiv>
+                  <span>{t`Debt:`}</span>
+                  <span>
+                    {formatUSD(
+                      normalizeBN(valueToBigNumber(totalDebtAfterTx), 18),
+                      { decimalPlaces: 2 },
+                    )}
+                  </span>
+                </ResultDiv>
+                <ResultDiv>
+                  <span>{t`Health Factor:`}</span>
+                  <span>
+                    {formatAmt(
+                      normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
+                      { decimalPlaces: 2 },
+                    )}
+                  </span>
+                </ResultDiv>
+                <ResultDiv>
+                  <span>{t`Net APY:`}</span>
+                  <span>
+                    {formatAmt(valueToBigNumber(netApy) || BN_ZERO, {
+                      symbol: '%',
+                      decimalPlaces: 2,
+                    })}
+                  </span>
+                </ResultDiv>
+              </StatusInfo>
+            </>
+          )}
         <SimpleCtaButton
-          onClick={debounce(() => startLeverager(formattedToBigNumber(supplyAmount) || BN_ZERO, leverage), 2000, { immediate: true })}
+          onClick={debounce(
+            () =>
+              startLeverager(
+                formattedToBigNumber(supplyAmount) || BN_ZERO,
+                leverage,
+              ),
+            2000,
+            { immediate: true },
+          )}
           disabled={!!estimation.unavailableReason}
         >
           {estimation.unavailableReason || t`Start leverager`}
@@ -195,8 +251,6 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     </WrapperDiv>
   )
 }
-
-const RATIO_LIST = [{ value: 2 }, { value: 4 }]
 
 const Description = styled.p`
   line-height: 1.5;
@@ -207,7 +261,7 @@ const StatusDiv = styled.div`
   p {
     font-size: 18px;
     font-weight: ${fontWeightHeavy};
-    color: ${offWhite}
+    color: ${offWhite};
   }
 `
 
