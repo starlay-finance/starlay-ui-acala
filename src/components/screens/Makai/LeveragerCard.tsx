@@ -222,8 +222,8 @@ const Button = styled.button`
 const LeveragerCardDiv = styled.div`
   display: flex;
   flex-direction: column;
-  height: 420px;
-  padding: 32px;
+  height: 360px;
+  padding: 24px;
   border-radius: 12px;
   background-color: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(8px) brightness(1.08);
