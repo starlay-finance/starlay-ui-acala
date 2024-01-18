@@ -186,6 +186,7 @@ const RATIO_LIST = [{ value: 2 }, { value: 4 }]
 
 const Description = styled.p`
   line-height: 1.5;
+  color: ${offWhite};
 `
 const StatusDiv = styled.div`
   margin-top: 24px;
@@ -281,6 +282,7 @@ const FlowDescription = styled.p`
   background-color: rgba(255, 255, 255, 0.027);
   padding: 4px 4px;
   margin-bottom: 8px;
+  color: ${offWhite};
 `
 
 const InfoTitle = styled.p`

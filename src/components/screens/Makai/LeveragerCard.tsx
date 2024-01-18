@@ -20,7 +20,7 @@ import {
 import styled from 'styled-components'
 
 type CardProps = {
-  collateralAsset?: AssetMarketData
+  collateralAsset?: AssetMarketData | undefined
   icon: StaticImageData
   symbol: AssetSymbol
   balance: BigNumber
@@ -41,7 +41,7 @@ export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, balan
     };
     fetchLtv();
 
-  }, [])
+  }, [collateralAsset?.underlyingAsset, getLTV])
   return (
     <LeveragerCardComponent
       icon={icon}

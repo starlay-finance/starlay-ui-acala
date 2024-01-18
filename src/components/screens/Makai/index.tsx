@@ -9,6 +9,7 @@ import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint, contentMaxWidthCssVar } from 'src/styles/mixins'
 import { APP } from 'src/utils/routes'
 import styled from 'styled-components'
+import { MakaiFAQ } from './MakaiFAQ'
 import { MakaiInfo } from './MakaiInfo'
 import { MakaiMarkets } from './MakaiMarkets'
 
@@ -27,6 +28,7 @@ export const Makai = () => {
         <Content>
           <MakaiInfo />
           <MakaiMarkets />
+          <MakaiFAQ />
         </Content>
         <AppMenu isOpen={isMenuOpen} close={() => setMenuOpen(false)} />
       </Main>
