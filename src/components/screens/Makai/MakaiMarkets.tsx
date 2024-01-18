@@ -31,6 +31,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
             <LeveragerCard
               key={asset.symbol}
               icon={asset.icon}
+              borrowApy={asset.variableBorrowAPY}
               collateralAsset={assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])}
               symbol={asset.symbol || asset.displaySymbol}
               balance={balances[asset.symbol]}

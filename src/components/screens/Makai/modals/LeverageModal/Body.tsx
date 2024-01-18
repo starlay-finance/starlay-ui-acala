@@ -1,11 +1,12 @@
 import { t } from '@lingui/macro'
 import { BigNumber, normalizeBN, valueToBigNumber } from '@starlay-finance/math-utils'
 import debounce from 'debounce'
-import { FC, useEffect, useState } from 'react'
+import { FC, useEffect, useMemo, useState } from 'react'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { ShimmerPlaceholder } from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
+import { useLdotApy } from 'src/hooks/useLdotApy'
 import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
 import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
@@ -44,8 +45,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     asset,
     userAssetBalance,
   } = estimationParams
-  const { symbol, displaySymbol } = asset
+  const { symbol, displaySymbol, variableBorrowAPY } = asset
   const { inWallet } = userAssetBalance
+  const { apy } = useLdotApy()
+
   const [supplyAmount, setSupplyAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -60,6 +63,13 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     userAssetBalance,
     leverage,
   })
+
+  const netApy = useMemo(() => {
+    const netApy = leverage.toNumber() * (apy - variableBorrowAPY.toNumber()) * 100
+    return netApy > 0 ? netApy : 0
+  }, [leverage, apy, variableBorrowAPY])
+
+
   useEffect(() => {
     const fetchLtv = async () => {
       try {
@@ -170,7 +180,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
               </ResultDiv>
               <ResultDiv>
                 <span>{t`Net APY:`}</span>
-                <span>-</span>
+                <span>{formatAmt(valueToBigNumber(netApy) || BN_ZERO, { symbol: "%", decimalPlaces: 2 })}</span>
               </ResultDiv>
             </StatusInfo>
           </>

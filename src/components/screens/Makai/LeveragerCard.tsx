@@ -1,11 +1,12 @@
 import { t } from '@lingui/macro'
-import { BigNumber } from '@starlay-finance/math-utils'
+import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
 import { StaticImageData } from 'next/image'
-import { FC, ReactNode, useEffect, useState } from 'react'
+import { FC, ReactNode, useEffect, useMemo, useState } from 'react'
 import { Image } from 'src/components/elements/Image'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
+import { useLdotApy } from 'src/hooks/useLdotApy'
 import { darkGray, primary, purple } from 'src/styles/colors'
 import {
   fontWeightMedium,
@@ -22,14 +23,22 @@ import styled from 'styled-components'
 type CardProps = {
   collateralAsset?: AssetMarketData | undefined
   icon: StaticImageData
+  borrowApy: BigNumber
   symbol: AssetSymbol
   balance: BigNumber
   onClick: VoidFunction
 }
 
-export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, balance, symbol, onClick, className }) => {
+export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, borrowApy, balance, symbol, onClick, className }) => {
   const { getLTV } = useLeverager()
-  const [maxLeverage, setMaxLeverage] = useState<number>()
+  const [maxLeverage, setMaxLeverage] = useState<number | undefined>(undefined)
+  const { apy } = useLdotApy()
+
+  const maxApy = useMemo(() => {
+    const maxApy = (maxLeverage || 0) * (apy - borrowApy.toNumber()) * 100
+    return maxApy > 0 ? maxApy : 0
+  }, [apy, borrowApy, maxLeverage])
+
   useEffect(() => {
     const fetchLtv = async () => {
       try {
@@ -52,7 +61,7 @@ export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, balan
       maxApy={
         {
           label: t`Max APY:`,
-          value: `-`,
+          value: formatAmt(valueToBigNumber(maxApy) || BN_ZERO, { symbol: "%", decimalPlaces: 2 }),
           tooltip: t`Estimated APY at maximum available leverage`,
         }
       }
