@@ -122,40 +122,41 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     <WrapperDiv>
       <InfoDiv>
         <Description>
-          <p>{t`Use Starlay to operate your DOT and lDOT in a novel way: Exchange your DOT for Starlay’s lDOT to maximize staking returns by leveraging additional lDOT against your original DOT holdings.`}</p>
+          <p>{t`Exchange your DOT for lDOT to maximize staking returns by leveraging additional lDOT against your original DOT holdings.`}</p>
           <br />
         </Description>
         <Description>
-          <p>{t`This innovative approach aims to boost your staking rewards but comes with its own set of considerations. Firstly, be mindful that the borrowing rate for DOT on Starlay fluctuates, and it might not always be favorable compared to the rewards from staking. Secondly, the exchange rate between lDOT and DOT is not constant, meaning that a decrease in the lDOT/DOT ratio could lead to potential risks or losses when you decide to withdraw your investment. Lastly, there’s an inherent risk of liquidation with such positions. Stay informed about the specific liquidation thresholds for lDOT/DOT on the Starlay platform, usually visible in a prominent section of the user interface.`}</p>
+          <p>{t`This approach aims to boost your staking rewards but comes with its own set of considerations.`}</p>
+          <p>{t`1. Be mindful that the borrowing rate for DOT on Starlay fluctuates, and it might not always be favorable compared to the rewards from staking.`}</p>
+          <p>{t`2. The exchange rate between lDOT and DOT is not constant, meaning that a decrease in the lDOT/DOT ratio could lead to potential risks or losses when you decide to withdraw your investment.`}</p>
+          <p>{t`3. There’s an inherent risk of liquidation with such positions.`}</p>
+          <br />
+          <p>{t`Stay informed about the specific liquidation thresholds for lDOT/DOT on the Starlay platform, usually visible in a prominent section of the user interface.`}</p>
           <br />
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT with flashloan`}</p>
+              } DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT into LDOT`}</p>
+              } DOT into LDOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Borrow ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               (Number(leverage) - 1)
-            } DOT from lending pool`}</p>
+              } DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan ${
-              Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
+            <p>{t`Pay flashloan ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
               Number(leverage)
-            } DOT`}</p>
+              } DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
