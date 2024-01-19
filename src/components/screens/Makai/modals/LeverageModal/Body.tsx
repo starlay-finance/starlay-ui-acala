@@ -117,7 +117,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     leverage,
     supplyAmount,
   ])
-
+  console.log(Number(formatAmt(
+    normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
+    { decimalPlaces: 2 },
+  )))
   return (
     <WrapperDiv>
       <InfoDiv>
@@ -236,6 +239,14 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                   </span>
                 </ResultDiv>
               </StatusInfo>
+              {Number(formatAmt(
+                normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
+                { decimalPlaces: 2 },
+              )) < 1 &&
+                <WarningDiv>
+                  <p>Below liquidation threshold.</p>
+                </WarningDiv>
+              }
             </>
           )}
         <SimpleCtaButton
@@ -352,6 +363,17 @@ const StatusInfo = styled.div`
   background-color: rgba(255, 255, 255, 0.027);
   margin-top: 24px;
   padding: 16px;
+`
+const WarningDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  background-color: rgba(107, 32, 32, 0.945);
+  margin-top: 24px;
+  padding: 16px;
+  p {
+    color: ${offWhite};
+  }
 `
 
 const FlowDescription = styled.div`
