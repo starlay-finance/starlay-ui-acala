@@ -117,10 +117,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     leverage,
     supplyAmount,
   ])
-  console.log(Number(formatAmt(
-    normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
-    { decimalPlaces: 2 },
-  )))
+
   return (
     <WrapperDiv>
       <InfoDiv>
