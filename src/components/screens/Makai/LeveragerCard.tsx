@@ -8,16 +8,10 @@ import { TooltipMessage } from 'src/components/parts/ToolTip'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import { darkGray, primary, purple } from 'src/styles/colors'
-import {
-  fontWeightMedium,
-  fontWeightSemiBold
-} from 'src/styles/font'
+import { fontWeightMedium, fontWeightSemiBold } from 'src/styles/font'
 import { AssetMarketData, AssetSymbol } from 'src/types/models'
 import { EthereumAddress } from 'src/types/web3'
-import {
-  BN_ZERO,
-  formatAmt,
-} from 'src/utils/number'
+import { BN_ZERO, formatAmt } from 'src/utils/number'
 import styled from 'styled-components'
 
 type CardProps = {
@@ -29,67 +23,86 @@ type CardProps = {
   onClick: VoidFunction
 }
 
-export const LeveragerCard = asStyled<CardProps>(({ collateralAsset, icon, borrowApy, balance, symbol, onClick, className }) => {
-  const { getLTV } = useLeverager()
-  const [maxLeverage, setMaxLeverage] = useState<number | undefined>(undefined)
-  const { apy } = useLdotApy()
+export const LeveragerCard = asStyled<CardProps>(
+  ({
+    collateralAsset,
+    icon,
+    borrowApy,
+    balance,
+    symbol,
+    onClick,
+    className,
+  }) => {
+    const { getLTV } = useLeverager()
+    const [maxLeverage, setMaxLeverage] =
+      useState<number | undefined>(undefined)
+    const { apy } = useLdotApy()
 
-  const maxApy = useMemo(() => {
-    const maxApy = (maxLeverage || 0) * (apy - borrowApy.toNumber()) * 100
-    return maxApy > 0 ? maxApy : 0
-  }, [apy, borrowApy, maxLeverage])
+    const maxApy = useMemo(() => {
+      const maxApy =
+        (maxLeverage || 0) *
+        (apy -
+          borrowApy.toNumber() +
+          (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
+        100
+      return maxApy > 0 ? maxApy : 0
+    }, [apy, borrowApy, maxLeverage, collateralAsset])
 
-  useEffect(() => {
-    const fetchLtv = async () => {
-      try {
-        const result = await getLTV({ asset: collateralAsset?.underlyingAsset as EthereumAddress })
-        setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchLtv();
-
-  }, [collateralAsset?.underlyingAsset, getLTV])
-  return (
-    <LeveragerCardComponent
-      icon={icon}
-      symbol={symbol}
-      collateralSymbol={collateralAsset?.symbol!}
-      collateralIcon={collateralAsset?.icon!}
-      className={className}
-      maxApy={
-        {
-          label: t`Max APY:`,
-          value: formatAmt(valueToBigNumber(maxApy) || BN_ZERO, { symbol: "%", decimalPlaces: 2 }),
-          tooltip: t`Estimated APY at maximum available leverage`,
+    useEffect(() => {
+      const fetchLtv = async () => {
+        try {
+          const result = await getLTV({
+            asset: collateralAsset?.underlyingAsset as EthereumAddress,
+          })
+          setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
+        } catch (error) {
+          console.error('Error fetching data:', error)
         }
       }
-      details={[
-        {
-          label: t`Wallet Balance`,
-          value: formatAmt(balance || BN_ZERO, { symbol, decimalPlaces: 2 }),
-        },
-        {
-          label: t`Position`,
-          value: `${collateralAsset?.symbol}/${symbol}`,
-          tooltip: t`Combination of assets used (collateral/debt)`,
-        },
-        {
-          label: t`Max Leverage`,
-          value: maxLeverage ? `${maxLeverage}X` : '-',
-          tooltip: t`Maximum possible leverage for this combination of assets.`,
-        },
-      ]}
-      actions={[
-        {
-          label: t`Create`,
-          onClick: onClick,
-        },
-      ]}
-    />
-  )
-})``
+      fetchLtv()
+    }, [collateralAsset?.underlyingAsset, getLTV])
+
+    return (
+      <LeveragerCardComponent
+        icon={icon}
+        symbol={symbol}
+        collateralSymbol={collateralAsset?.symbol!}
+        collateralIcon={collateralAsset?.icon!}
+        className={className}
+        maxApy={{
+          label: t`Max APY:`,
+          value: formatAmt(valueToBigNumber(maxApy) || BN_ZERO, {
+            symbol: '%',
+            decimalPlaces: 2,
+          }),
+          tooltip: t`Estimated APY at maximum available leverage`,
+        }}
+        details={[
+          {
+            label: t`Wallet Balance`,
+            value: formatAmt(balance || BN_ZERO, { symbol, decimalPlaces: 2 }),
+          },
+          {
+            label: t`Position`,
+            value: `${collateralAsset?.symbol}/${symbol}`,
+            tooltip: t`Combination of assets used (collateral/debt)`,
+          },
+          {
+            label: t`Max Leverage`,
+            value: maxLeverage ? `${maxLeverage}X` : '-',
+            tooltip: t`Maximum possible leverage for this combination of assets.`,
+          },
+        ]}
+        actions={[
+          {
+            label: t`Create`,
+            onClick: onClick,
+          },
+        ]}
+      />
+    )
+  },
+)``
 
 type LeveragerCardProps = {
   icon: StaticImageData
@@ -111,13 +124,30 @@ type LeveragerCardProps = {
     onClick: VoidFunction
   }[]
 }
-const LeveragerCardComponent = styled<FC<LeveragerCardProps & { className?: string }>>(
-  ({ icon, collateralIcon, symbol, collateralSymbol, actions, maxApy, details, className }) => {
+const LeveragerCardComponent = styled<
+  FC<LeveragerCardProps & { className?: string }>
+>(
+  ({
+    icon,
+    collateralIcon,
+    symbol,
+    collateralSymbol,
+    actions,
+    maxApy,
+    details,
+    className,
+  }) => {
     return (
       <LeveragerCardDiv className={className}>
         <PairDiv>
           <Image src={icon} alt={symbol} width={48} height={48} />
-          <Image src={collateralIcon} alt={collateralSymbol} width={52} height={48} style={{ marginLeft: "-8px" }} />
+          <Image
+            src={collateralIcon}
+            alt={collateralSymbol}
+            width={52}
+            height={48}
+            style={{ marginLeft: '-8px' }}
+          />
         </PairDiv>
         {maxApy && (
           <MaxApyDiv>
@@ -143,10 +173,7 @@ const LeveragerCardComponent = styled<FC<LeveragerCardProps & { className?: stri
         )}
         <ActionsDiv>
           {actions.map(({ label, onClick }) => (
-            <Button
-              key={label}
-              onClick={onClick}
-            >
+            <Button key={label} onClick={onClick}>
               {label}
             </Button>
           ))}
