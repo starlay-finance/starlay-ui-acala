@@ -12,7 +12,7 @@ import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
-import { fontWeightHeavy } from 'src/styles/font'
+import { fontWeightBold, fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetMarketData } from 'src/types/models'
 import {
@@ -337,6 +337,7 @@ const SupplyDiv = styled.div`
 const FlowInfo = styled.div`
   display: flex;
   flex-direction: column;
+  border-radius: 8px;
   background-color: #0f0f0f;
   padding-top: 8px;
   padding-left: 8px;
@@ -346,6 +347,7 @@ const FlowInfo = styled.div`
 const StatusInfo = styled.div`
   display: flex;
   flex-direction: column;
+  border-radius: 8px;
   row-gap: 12px;
   background-color: rgba(255, 255, 255, 0.027);
   margin-top: 24px;
@@ -355,11 +357,14 @@ const StatusInfo = styled.div`
 const FlowDescription = styled.div`
   p {
     line-height: 1.5;
+    font-size: 14px;
+    font-weight: ${fontWeightBold};
     color: ${offWhite};
   }
   background-color: rgba(255, 255, 255, 0.027);
   padding: 4px 4px;
   margin-bottom: 8px;
+  border-radius: 8px;
 `
 
 const InfoTitle = styled.p`
