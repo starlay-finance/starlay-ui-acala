@@ -150,7 +150,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
           </FlowDescription>
           <FlowDescription>
             <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
-              (Number(leverage) - 1)
+              Number(leverage.minus(valueToBigNumber(1)))
               } DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
