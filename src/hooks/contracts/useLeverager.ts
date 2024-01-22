@@ -119,7 +119,6 @@ export const useLeverager = () => {
         return '0'
       }
       const ltv = await leveragerLdot.ltv(param.asset)
-      console.log('ltv', ltv)
       return ltv
     },
     [leveragerLdot],
