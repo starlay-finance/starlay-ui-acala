@@ -18,6 +18,7 @@ export type EventType =
   | 'borrow'
   | 'repay'
   | 'leverageLdot'
+  | 'leverageDotFromPosition'
 
 export const createTrackedData = (
   eventType: TrackedData['eventType'],

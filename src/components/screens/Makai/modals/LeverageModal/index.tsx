@@ -13,22 +13,52 @@ import { EthereumAddress } from 'src/types/web3'
 import { LeveragerModalBody, LeveragerModalBodyProps } from './Body'
 
 export const Leverager: FC<
-  ModalContentProps<Omit<Omit<Omit<LeveragerModalBodyProps, 'startLeverager'>, 'getStatusAfterTransaction'>, 'getLTV'>>
+  ModalContentProps<
+    Omit<
+      Omit<
+        Omit<
+          Omit<
+            Omit<
+              Omit<LeveragerModalBodyProps, 'startLeverager'>,
+              'getStatusAfterLeverageDotTransaction'
+            >,
+            'getLTV'
+          >,
+          'getExchangeRateDOT2LDOT'
+        >,
+        'startLeveragerDotFromPosition'
+      >,
+      'getStatusAfterLeverageDotFromPositionTransaction'
+    >>
 > = ({ close, ...props }) => {
   const { data: marketData } = useMarketData()
   const { asset } = props
+  const { assets } = marketData || {}
+  const collateralAsset = assets?.find(
+    (each) =>
+      each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol],
+  )
   const {
-    assets,
-  } = marketData || {}
-  const collateralAsset = assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])
-  const { leverageLdot, getStatusAfterTransaction, getLTV } = useLeverager()
+    leverageLdot,
+    leverageDotFromPosition,
+    getStatusAfterLeverageDotTransaction,
+    getStatusAfterLeverageDotFromPositionTransaction,
+    getLTV,
+    getExchangeRateDOT2LDOT,
+  } = useLeverager()
   const { withTracking } = useTracking()
 
   const leverageWithTracking = withTracking<{
     asset: EthereumAddress
     amount: BigNumber
-    borrowAmount: BigNumber;
+    borrowAmount: BigNumber
   }>('leverageLdot', leverageLdot)
+
+  const leverageDotFromPositionWithTracking = withTracking<{
+    asset: EthereumAddress
+    amount: BigNumber
+    borrowAmount: BigNumber
+  }>('leverageDotFromPosition', leverageDotFromPosition)
 
   return (
     <DefaultModalContent
@@ -43,14 +73,33 @@ export const Leverager: FC<
               borrowAmount: amount.multipliedBy(leverage),
             })
           }
-          getStatusAfterTransaction={(amount, leverage) => getStatusAfterTransaction({
-            amount,
-            asset: asset.underlyingAsset as EthereumAddress,
-            borrowAmount: amount.multipliedBy(leverage),
-          })}
-          getLTV={() => getLTV({
-            asset: collateralAsset?.underlyingAsset as EthereumAddress,
-          })}
+          startLeveragerDotFromPosition={(amount, leverage) =>
+            leverageDotFromPositionWithTracking({
+              amount,
+              asset: asset.underlyingAsset as EthereumAddress,
+              borrowAmount: amount.multipliedBy(leverage),
+            })
+          }
+          getStatusAfterLeverageDotTransaction={(amount, leverage) =>
+            getStatusAfterLeverageDotTransaction({
+              amount,
+              asset: asset.underlyingAsset as EthereumAddress,
+              borrowAmount: amount.multipliedBy(leverage),
+            })
+          }
+          getStatusAfterLeverageDotFromPositionTransaction={(amount, leverage) =>
+            getStatusAfterLeverageDotFromPositionTransaction({
+              amount,
+              asset: asset.underlyingAsset as EthereumAddress,
+              borrowAmount: amount.multipliedBy(leverage),
+            })
+          }
+          getLTV={() =>
+            getLTV({
+              asset: collateralAsset?.underlyingAsset as EthereumAddress,
+            })
+          }
+          getExchangeRateDOT2LDOT={() => getExchangeRateDOT2LDOT()}
         />
       }
       closeModal={close}

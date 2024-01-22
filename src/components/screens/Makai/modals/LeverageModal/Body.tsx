@@ -5,13 +5,23 @@ import {
   valueToBigNumber,
 } from '@starlay-finance/math-utils'
 import debounce from 'debounce'
-import { FC, useEffect, useMemo, useState } from 'react'
+import { FC, useEffect, useMemo, useRef, useState } from 'react'
+import { IconArrowBottom } from 'src/assets/svgs'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { ShimmerPlaceholder } from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { useLdotApy } from 'src/hooks/useLdotApy'
-import { blue, darkRed, lightYellow, offWhite } from 'src/styles/colors'
+import {
+  blue,
+  darkGray,
+  darkRed,
+  lightBlack,
+  lightYellow,
+  offWhite,
+  purple,
+  trueWhite,
+} from 'src/styles/colors'
 import { fontWeightBold, fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetMarketData } from 'src/types/models'
@@ -25,7 +35,7 @@ import {
   formatUSD,
   formattedToBigNumber,
 } from 'src/utils/number'
-import styled from 'styled-components'
+import styled, { css } from 'styled-components'
 import {
   Action,
   AmountInput,
@@ -38,39 +48,54 @@ export type LeveragerModalBodyProps = Omit<
   'amount'
 > & {
   startLeverager: (amount: BigNumber, leverage: BigNumber) => Promise<any>
-  getStatusAfterTransaction: (
+  startLeveragerDotFromPosition: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
+  getStatusAfterLeverageDotTransaction: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
+  getStatusAfterLeverageDotFromPositionTransaction: (
     amount: BigNumber,
     leverage: BigNumber,
   ) => Promise<any>
   getLTV: () => Promise<string>
+  getExchangeRateDOT2LDOT: () => Promise<string>
   max?: boolean
   collateralAsset?: AssetMarketData
 }
 
 export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   startLeverager,
-  getStatusAfterTransaction,
+  startLeveragerDotFromPosition,
+  getStatusAfterLeverageDotTransaction,
+  getStatusAfterLeverageDotFromPositionTransaction,
   getLTV,
+  getExchangeRateDOT2LDOT,
   max,
   ...estimationParams
 }) => {
   const { asset, userAssetBalance, collateralAsset } = estimationParams
   const { symbol, displaySymbol, variableBorrowAPY } = asset
-  const { inWallet } = userAssetBalance
+  const { inWallet, deposited } = userAssetBalance
   const { apy } = useLdotApy()
-
   const [supplyAmount, setSupplyAmount] = useState('')
-
+  const [isAssetDropDownOpen, setIsAssetDropDownOpen] = useState(false)
+  const [isPosition, setIsPosition] = useState(false)
+  const assetDropDownContainerRef = useRef(null)
   const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('1.1'))
   const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
   const [totalDebtAfterTx, setTotalDebtAfterTx] = useState('')
   const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
   const [maxLeverage, setMaxLeverage] = useState<number>()
+  const [exchangeRateDOT2LDOT, setExchangeRateDOT2LDOT] = useState<string>('')
   const estimation = estimateLeverager({
     amount: formattedToBigNumber(supplyAmount),
     asset,
     userAssetBalance,
     leverage,
+    isPosition,
   })
 
   const netApy = useMemo(() => {
@@ -84,28 +109,41 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   }, [leverage, apy, variableBorrowAPY, collateralAsset])
 
   useEffect(() => {
-    const fetchLtv = async () => {
+    const fetchData = async () => {
       try {
-        const result = await getLTV()
-        setMaxLeverage(10000 / (10000 - Number(result)) - 0.1)
+        const [ltv, exchangeRateDOT2LDOT] = await Promise.all([
+          getLTV(),
+          getExchangeRateDOT2LDOT(),
+        ])
+        setMaxLeverage(10000 / (10000 - Number(ltv)) - 0.1)
+        setExchangeRateDOT2LDOT(exchangeRateDOT2LDOT)
       } catch (error) {
         console.error('Error fetching data:', error)
       }
     }
-    fetchLtv()
-  }, [getLTV])
+    fetchData()
+  }, [getExchangeRateDOT2LDOT, getLTV])
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Your asynchronous code here
-        const result = await getStatusAfterTransaction(
-          formattedToBigNumber(supplyAmount) || BN_ZERO,
-          leverage,
-        )
-        setTotalCollateralAfterTx(result.totalCollateralAfterTx)
-        setTotalDebtAfterTx(result.totalDebtAfterTx)
-        setHealthFactorAfterTx(result.healthFactorAfterTx)
+        if (isPosition) {
+          const result = await getStatusAfterLeverageDotFromPositionTransaction(
+            formattedToBigNumber(supplyAmount) || BN_ZERO,
+            leverage,
+          )
+          setTotalCollateralAfterTx(result.totalCollateralAfterTx)
+          setTotalDebtAfterTx(result.totalDebtAfterTx)
+          setHealthFactorAfterTx(result.healthFactorAfterTx)
+        } else {
+          const result = await getStatusAfterLeverageDotTransaction(
+            formattedToBigNumber(supplyAmount) || BN_ZERO,
+            leverage,
+          )
+          setTotalCollateralAfterTx(result.totalCollateralAfterTx)
+          setTotalDebtAfterTx(result.totalDebtAfterTx)
+          setHealthFactorAfterTx(result.healthFactorAfterTx)
+        }
       } catch (error) {
         console.error('Error fetching data:', error)
       }
@@ -113,10 +151,20 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     if (!estimation.unavailableReason) fetchData()
   }, [
     estimation.unavailableReason,
-    getStatusAfterTransaction,
+    getStatusAfterLeverageDotFromPositionTransaction,
+    getStatusAfterLeverageDotTransaction,
+    isPosition,
     leverage,
     supplyAmount,
   ])
+  const handleDotClick = () => {
+    setIsAssetDropDownOpen(false)
+    setIsPosition(false)
+  }
+  const handleDotPositionClick = () => {
+    setIsPosition(true)
+    setIsAssetDropDownOpen(false)
+  }
 
   return (
     <WrapperDiv>
@@ -136,35 +184,83 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         </Description>
         <FlowInfo>
           <FlowDescription>
-            <p>{t`Flash borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
-              Number(leverage)
-              } DOT with flashloan`}</p>
+            <p>{t`Flash borrow ${Number(
+              formattedToBigNumber(supplyAmount)?.multipliedBy(leverage) ||
+              BN_ZERO,
+            ).toFixed(2)} DOT with flashloan`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Wrap ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
-              Number(leverage)
-              } DOT into LDOT`}</p>
+            <p>{t`Wrap ${Number(
+              formattedToBigNumber(supplyAmount)?.multipliedBy(leverage) ||
+              BN_ZERO,
+            ).toFixed(2)} DOT into ${Number(
+              formattedToBigNumber(supplyAmount)
+                ?.multipliedBy(leverage)
+                .multipliedBy(
+                  normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18),
+                ) || BN_ZERO,
+            ).toFixed(2)} LDOT`}</p>
           </FlowDescription>
           <FlowDescription>
             <p>{t`Deposit exchanged LDOT into lending pool`}</p>
           </FlowDescription>
+          {isPosition && (
+            <FlowDescription>
+              <p>{t`Withdraw ${Number(
+                formattedToBigNumber(supplyAmount) || BN_ZERO,
+              ).toFixed(2)} DOT from lending pool`}</p>
+            </FlowDescription>
+          )}
+
           <FlowDescription>
-            <p>{t`Borrow ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
-              Number(leverage.minus(valueToBigNumber(1)))
-              } DOT from lending pool`}</p>
+            <p>{t`Borrow ${Number(
+              formattedToBigNumber(supplyAmount)?.multipliedBy(
+                leverage.minus(valueToBigNumber(1)),
+              ) || BN_ZERO,
+            ).toFixed(2)} DOT from lending pool`}</p>
           </FlowDescription>
           <FlowDescription>
-            <p>{t`Pay flashloan ${Number(formattedToBigNumber(supplyAmount) || BN_ZERO) *
-              Number(leverage)
-              } DOT`}</p>
+            <p>{t`Pay flashloan ${Number(
+              formattedToBigNumber(supplyAmount)?.multipliedBy(leverage) ||
+              BN_ZERO,
+            ).toFixed(2)} DOT`}</p>
           </FlowDescription>
         </FlowInfo>
       </InfoDiv>
       <ActionDiv>
-        <SupplyDiv>
-          <InfoTitle>Asset:</InfoTitle>
-          <AssetLabel asset={asset} label={asset.symbol} />
-        </SupplyDiv>
+        <AssetDropDownDiv>
+          <SupplyDiv>
+            <InfoTitle>Asset:</InfoTitle>
+            <AssetDiv
+              onClick={() => setIsAssetDropDownOpen(!isAssetDropDownOpen)}
+            >
+              <AssetLabel
+                asset={asset}
+                label={`${asset.symbol}${isPosition ? '(position)' : ''}`}
+              />
+              <IconArrowBottom />
+            </AssetDiv>
+          </SupplyDiv>
+          <AssetDropDown
+            $isOpen={isAssetDropDownOpen}
+            ref={assetDropDownContainerRef}
+          >
+            <DropDownDiv
+              as="div"
+              onClick={handleDotClick}
+              $isActive={!isPosition}
+            >
+              <AssetLabel asset={asset} label={asset.symbol} />
+            </DropDownDiv>
+            <DropDownDiv
+              as="div"
+              onClick={handleDotPositionClick}
+              $isActive={isPosition}
+            >
+              <AssetLabel asset={asset} label={`${asset.symbol}(position)`} />
+            </DropDownDiv>
+          </AssetDropDown>
+        </AssetDropDownDiv>
         <SupplyDiv style={{ marginTop: '24px' }}>
           <InfoTitle>Supply:</InfoTitle>
           <AmountInput
@@ -185,11 +281,20 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         ) : (
           <ShimmerPlaceholder />
         )}
-        <Balance
-          label={t`Wallet Balance`}
-          balance={inWallet}
-          symbol={displaySymbol || symbol}
-        />
+        {isPosition ? (
+          <Balance
+            label={t`Deposited ${symbol}`}
+            balance={deposited}
+            symbol={displaySymbol || symbol}
+          />
+        ) : (
+          <Balance
+            label={t`Wallet Balance`}
+            balance={inWallet}
+            symbol={displaySymbol || symbol}
+          />
+        )}
+
         {!estimation.unavailableReason &&
           !!totalCollateralAfterTx &&
           !!totalDebtAfterTx &&
@@ -236,26 +341,40 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                   </span>
                 </ResultDiv>
               </StatusInfo>
-              {Number(formatAmt(
-                normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
-                { decimalPlaces: 2 },
-              )) < 1 &&
-                <WarningDiv>
-                  <p>Below liquidation threshold.</p>
-                </WarningDiv>
-              }
+              {Number(
+                formatAmt(
+                  normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
+                  { decimalPlaces: 2 },
+                ),
+              ) < 1 && (
+                  <WarningDiv>
+                    <p>Below liquidation threshold.</p>
+                  </WarningDiv>
+                )}
             </>
           )}
         <SimpleCtaButton
-          onClick={debounce(
-            () =>
-              startLeverager(
-                formattedToBigNumber(supplyAmount) || BN_ZERO,
-                leverage,
-              ),
-            2000,
-            { immediate: true },
-          )}
+          onClick={
+            isPosition
+              ? debounce(
+                () =>
+                  startLeveragerDotFromPosition(
+                    formattedToBigNumber(supplyAmount) || BN_ZERO,
+                    leverage,
+                  ),
+                2000,
+                { immediate: true },
+              )
+              : debounce(
+                () =>
+                  startLeverager(
+                    formattedToBigNumber(supplyAmount) || BN_ZERO,
+                    leverage,
+                  ),
+                2000,
+                { immediate: true },
+              )
+          }
           disabled={!!estimation.unavailableReason}
         >
           {estimation.unavailableReason || t`Start leverager`}
@@ -342,6 +461,15 @@ const SupplyDiv = styled.div`
   align-items: center;
 `
 
+const AssetDiv = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 16px;
+  cursor: pointer;
+`
+
 const FlowInfo = styled.div`
   display: flex;
   flex-direction: column;
@@ -413,4 +541,48 @@ const ResultDiv = styled.div`
   span:last-child {
     color: ${offWhite};
   }
+`
+
+const AssetDropDown = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  z-index: 10;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  background-color: ${lightBlack};
+  ${({ $isOpen }) =>
+    $isOpen &&
+    css`
+      visibility: visible;
+      opacity: 1;
+    `}
+`
+const AssetDropDownDiv = styled.div`
+  position: relative;
+`
+
+const DropDownDiv = styled.div<{ $isActive: boolean }>`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 16px;
+  white-space: nowrap;
+  line-height: 1;
+  transition: color 0.15s ease-in;
+  cursor: pointer;
+  :hover {
+    color: ${purple};
+  }
+  :disabled {
+    color: ${trueWhite}80;
+  }
+  ${({ $isActive }) =>
+    $isActive &&
+    css`
+      background-color: ${darkGray};
+    `}
 `

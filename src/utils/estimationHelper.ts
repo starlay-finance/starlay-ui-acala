@@ -38,6 +38,7 @@ export type LeveragerEstimationParam = {
   amount: BigNumber | undefined
   asset: AssetMarketData
   userAssetBalance: UserAssetBalance
+  isPosition: boolean
 }
 
 export const estimateDeposit = ({
@@ -357,11 +358,12 @@ export const estimateLeverager = ({
   amount,
   userAssetBalance,
   leverage,
+  isPosition,
 }: LeveragerEstimationParam & {
   leverage: BigNumber
 }): LeveragerEstimationResult => {
-  const { inWallet } = userAssetBalance
-  const maxAmount = inWallet
+  const { inWallet, deposited } = userAssetBalance
+  const maxAmount = isPosition ? deposited : inWallet
   if (!validEstimationInput(amount))
     return {
       unavailableReason: t`Enter amount`,

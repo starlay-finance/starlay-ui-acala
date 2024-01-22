@@ -4,6 +4,7 @@ import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } fro
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
+import { breakpoint } from 'src/styles/mixins'
 import { symbolSorter } from 'src/utils/market'
 import styled from 'styled-components'
 import { LeveragerCard } from './LeveragerCard'
@@ -44,6 +45,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
                       ...userData.balanceByAsset[asset.symbol],
                       inWallet: balances[asset.symbol],
                     },
+                    isPosition: false
                   })
                 : openWalletModal}
             />
@@ -62,9 +64,14 @@ const MakaiMarketsSection = styled.section``
 
 const Section = styled.section`
   display: flex;
+  flex-direction: column;
   column-gap: 24px;
   > * {
     flex: 1;
+  }
+  @media ${breakpoint.xl} {
+    flex-direction: row;
+
   }
 `
 

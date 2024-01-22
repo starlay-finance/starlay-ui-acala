@@ -243,17 +243,10 @@ const Button = styled.button`
   padding: 16px;
   width: 100%;
   border-radius: 4px;
-  background-color: ${darkGray};
+  background-color: ${purple};
   backdrop-filter: blur(16px) brightness(1.08);
   text-align: center;
   transition: all 0.2s ease-in;
-  :enabled:hover {
-    background-color: ${purple};
-  }
-  :disabled {
-    background-color: rgba(255, 255, 255, 0.08);
-    opacity: 0.32;
-  }
 `
 const LeveragerCardDiv = styled.div`
   display: flex;
