@@ -4726,10 +4726,10 @@
     "@stablelib/random" "^1.0.2"
     "@stablelib/wipe" "^1.0.1"
 
-"@starlay-finance/contract-helpers@0.0.18-fc7e588e51d7bcd22247552ee42aef9e36418bd6.0":
-  version "0.0.18-fc7e588e51d7bcd22247552ee42aef9e36418bd6.0"
-  resolved "https://registry.yarnpkg.com/@starlay-finance/contract-helpers/-/contract-helpers-0.0.18-fc7e588e51d7bcd22247552ee42aef9e36418bd6.0.tgz#33157b72eac4e965095c7518ef96546626b72adc"
-  integrity sha512-/B4jdaXcqDOTjTexaOYod92rDAvuX/TBLdirq2u27sWmbvvy6xH9lzI0/pSDdAOB4Vjkb8fPGegd1aJMTqQ4Tw==
+"@starlay-finance/contract-helpers@0.0.18-7681e49c8bd0592117eacf5b7b7f4975a0967d6e.0":
+  version "0.0.18-7681e49c8bd0592117eacf5b7b7f4975a0967d6e.0"
+  resolved "https://registry.yarnpkg.com/@starlay-finance/contract-helpers/-/contract-helpers-0.0.18-7681e49c8bd0592117eacf5b7b7f4975a0967d6e.0.tgz#013f4e520c2c3ca1adda5e16a43dda8dc4738019"
+  integrity sha512-yq1QBMdngFys1GsMU4bB/wkLunoa2i2GmJjSa+Dz8Amg/kl7Ul0ITgDRaY6Ct8wyYT0UslM6hvwoIvnlWcYkvw==
   dependencies:
     isomorphic-unfetch "^3.1.0"
 
