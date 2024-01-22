@@ -1,6 +1,6 @@
 import { BigNumber } from '@starlay-finance/math-utils'
 import { useCallback } from 'react'
-import { getMarketConfigEVM } from 'src/libs/config'
+import { getMarketConfigEVM, getNetworkConfigEVM } from 'src/libs/config'
 import { leveragerContract } from 'src/libs/leverager'
 import { EthereumAddress } from 'src/types/web3'
 import useSWRImmutable from 'swr/immutable'
@@ -15,8 +15,11 @@ export const useLeverager = () => {
     provider && ['leverageLdot', provider.chainId],
     () => {
       const { LEVERAGER_LDOT } = getMarketConfigEVM(provider!.chainId).addresses
+      const { walletBalanceProvider } = getNetworkConfigEVM(
+        provider!.chainId,
+      ).addresses
       if (!LEVERAGER_LDOT) return undefined
-      return leveragerContract(provider!, LEVERAGER_LDOT)
+      return leveragerContract(provider!, LEVERAGER_LDOT, walletBalanceProvider)
     },
   )
 
@@ -116,6 +119,7 @@ export const useLeverager = () => {
         return '0'
       }
       const ltv = await leveragerLdot.ltv(param.asset)
+      console.log('ltv', ltv)
       return ltv
     },
     [leveragerLdot],

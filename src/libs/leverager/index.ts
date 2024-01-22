@@ -5,4 +5,5 @@ import { StaticRPCProviderEVM } from '../static-rpc-provider'
 export const leveragerContract = (
   { provider }: StaticRPCProviderEVM,
   leveragerAddress: EthereumAddress,
-) => new LeveragerLdot(provider, leveragerAddress)
+  walletBalanceProviderAddress: EthereumAddress,
+) => new LeveragerLdot(provider, leveragerAddress, walletBalanceProviderAddress)
