@@ -1,12 +1,10 @@
 import { t } from '@lingui/macro'
 import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
-import debounce from 'debounce'
 import { StaticImageData } from 'next/image'
 import { FC, ReactNode, useEffect, useMemo, useState } from 'react'
 import { Image } from 'src/components/elements/Image'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
-import { ASSET_ADDRESSES } from 'src/constants/assets'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import { darkGray, primary, purple } from 'src/styles/colors'
@@ -23,6 +21,7 @@ type CardProps = {
   symbol: AssetSymbol
   balance: BigNumber
   onClick: VoidFunction
+  onClose: VoidFunction
 }
 
 export const LeveragerCard = asStyled<CardProps>(
@@ -33,9 +32,10 @@ export const LeveragerCard = asStyled<CardProps>(
     balance,
     symbol,
     onClick,
+    onClose,
     className,
   }) => {
-    const { getLTV, closeLeverageDOT } = useLeverager()
+    const { getLTV } = useLeverager()
     const [maxLeverage, setMaxLeverage] =
       useState<number | undefined>(undefined)
     const { apy } = useLdotApy()
@@ -102,19 +102,7 @@ export const LeveragerCard = asStyled<CardProps>(
           },
           {
             label: t`Close`,
-            onClick: debounce(
-              () => {
-                closeLeverageDOT({
-                  dotAddress: ASSET_ADDRESSES[symbol] as EthereumAddress,
-                  ldotAddress:
-                    collateralAsset?.underlyingAsset as EthereumAddress,
-                })
-              },
-              2000,
-              {
-                immediate: true,
-              },
-            ),
+            onClick: onClose,
           },
         ]}
       />
