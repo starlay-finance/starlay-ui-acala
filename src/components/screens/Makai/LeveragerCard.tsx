@@ -21,7 +21,6 @@ type CardProps = {
   symbol: AssetSymbol
   balance: BigNumber
   onClick: VoidFunction
-  onClose: VoidFunction
 }
 
 export const LeveragerCard = asStyled<CardProps>(
@@ -32,7 +31,6 @@ export const LeveragerCard = asStyled<CardProps>(
     balance,
     symbol,
     onClick,
-    onClose,
     className,
   }) => {
     const { getLTV } = useLeverager()
@@ -99,11 +97,7 @@ export const LeveragerCard = asStyled<CardProps>(
           {
             label: t`Create`,
             onClick: onClick,
-          },
-          {
-            label: t`Close`,
-            onClick: onClose,
-          },
+          }
         ]}
       />
     )
@@ -254,9 +248,6 @@ const Button = styled.button`
   backdrop-filter: blur(16px) brightness(1.08);
   text-align: center;
   transition: all 0.2s ease-in;
-  :last-child {
-    background-color: ${darkGray};
-  }
 `
 const LeveragerCardDiv = styled.div`
   display: flex;

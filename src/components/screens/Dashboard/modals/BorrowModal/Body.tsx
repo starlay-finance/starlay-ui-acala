@@ -165,7 +165,7 @@ export const BorrowModalBody: FC<BorrowModalBodyProps> = ({
         )}
         {activeTab === 'borrow' ? (
           <SimpleCtaButton
-            onClick={debounce(() => borrow(valueToBigNumber(borrowingAmountBn!)), 2000, { immediate: true })}
+            onClick={debounce(() => borrow(valueToBigNumber(borrowingAmountBn!)), 5000, { immediate: true })}
             disabled={!!estimation.unavailableReason
             }
           >
@@ -173,7 +173,7 @@ export const BorrowModalBody: FC<BorrowModalBodyProps> = ({
           </SimpleCtaButton>
         ) : (
           <SimpleCtaButton
-            onClick={debounce(() => repay(valueToBigNumber(repaymentAmountBn!), all), 2000, { immediate: true })}
+            onClick={debounce(() => repay(valueToBigNumber(repaymentAmountBn!), all), 5000, { immediate: true })}
             disabled={!!estimation.unavailableReason}
           >
             {estimation.unavailableReason || t`Repay`}

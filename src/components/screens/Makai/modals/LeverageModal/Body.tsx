@@ -50,6 +50,7 @@ export type LeveragerModalBodyProps = Omit<
     amount: BigNumber,
     leverage: BigNumber,
   ) => Promise<any>
+  closeLeverageDOT: () => Promise<any>
   getStatusAfterLeverageDotTransaction: (
     amount: BigNumber,
     leverage: BigNumber,
@@ -67,6 +68,7 @@ export type LeveragerModalBodyProps = Omit<
 export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   startLeverager,
   startLeveragerDotFromPosition,
+  closeLeverageDOT,
   getStatusAfterLeverageDotTransaction,
   getStatusAfterLeverageDotFromPositionTransaction,
   getLTV,
@@ -360,7 +362,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                     formattedToBigNumber(supplyAmount) || BN_ZERO,
                     leverage,
                   ),
-                2000,
+                10000,
                 { immediate: true },
               )
               : debounce(
@@ -369,7 +371,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                     formattedToBigNumber(supplyAmount) || BN_ZERO,
                     leverage,
                   ),
-                2000,
+                10000,
                 { immediate: true },
               )
           }
@@ -377,6 +379,20 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         >
           {estimation.unavailableReason || t`Start leverager`}
         </SimpleCtaButton>
+        {!isPosition &&
+          <SimpleCtaButton
+            onClick={
+              debounce(
+                () =>
+                  closeLeverageDOT(),
+                15000,
+                { immediate: true },
+              )
+            }
+          >
+            {t`Close Leverager`}
+          </SimpleCtaButton>
+        }
       </ActionDiv>
     </WrapperDiv>
   )

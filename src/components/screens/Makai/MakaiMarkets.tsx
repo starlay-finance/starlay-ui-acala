@@ -1,13 +1,11 @@
-import debounce from 'debounce'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
-import { ASSET_ADDRESSES, LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
+import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
 import { breakpoint } from 'src/styles/mixins'
-import { EthereumAddress } from 'src/types/web3'
 import { symbolSorter } from 'src/utils/market'
 import styled from 'styled-components'
 import { LeveragerCard } from './LeveragerCard'
@@ -52,20 +50,6 @@ export const MakaiMarkets = asStyled(({ className }) => {
                     },
                     isPosition: false
                   })
-                : openWalletModal}
-              onClose={userData
-                ? debounce(() => {
-                  closeLeverageDOT({
-                    dotAddress: ASSET_ADDRESSES[asset.symbol || asset.displaySymbol] as EthereumAddress,
-                    ldotAddress:
-                      assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])?.underlyingAsset as EthereumAddress,
-                  })
-                },
-                  2000,
-                  {
-                    immediate: true,
-                  },
-                )
                 : openWalletModal}
             />
           ))

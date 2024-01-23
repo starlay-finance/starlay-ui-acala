@@ -4,7 +4,7 @@ import { FC } from 'react'
 import { requireSupportedChain } from 'src/components/hoc/requireSupportedChain'
 import { DefaultModalContent } from 'src/components/parts/Modal/base'
 import { ItemLabelPair } from 'src/components/parts/Modal/parts'
-import { LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
+import { ASSET_ADDRESSES, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { ModalContentProps, useModalDialog } from 'src/hooks/useModal'
@@ -19,16 +19,19 @@ export const Leverager: FC<
         Omit<
           Omit<
             Omit<
-              Omit<LeveragerModalBodyProps, 'startLeverager'>,
-              'getStatusAfterLeverageDotTransaction'
+              Omit<
+                Omit<LeveragerModalBodyProps, 'startLeverager'>,
+                'getStatusAfterLeverageDotTransaction'
+              >,
+              'getLTV'
             >,
-            'getLTV'
+            'getExchangeRateDOT2LDOT'
           >,
-          'getExchangeRateDOT2LDOT'
+          'startLeveragerDotFromPosition'
         >,
-        'startLeveragerDotFromPosition'
+        'getStatusAfterLeverageDotFromPositionTransaction'
       >,
-      'getStatusAfterLeverageDotFromPositionTransaction'
+      'closeLeverageDOT'
     >>
 > = ({ close, ...props }) => {
   const { data: marketData } = useMarketData()
@@ -45,6 +48,7 @@ export const Leverager: FC<
     getStatusAfterLeverageDotFromPositionTransaction,
     getLTV,
     getExchangeRateDOT2LDOT,
+    closeLeverageDOT
   } = useLeverager()
   const { withTracking } = useTracking()
 
@@ -100,6 +104,10 @@ export const Leverager: FC<
             })
           }
           getExchangeRateDOT2LDOT={() => getExchangeRateDOT2LDOT()}
+          closeLeverageDOT={() => closeLeverageDOT({
+            dotAddress: ASSET_ADDRESSES[asset.symbol] as EthereumAddress,
+            ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,
+          })}
         />
       }
       closeModal={close}
