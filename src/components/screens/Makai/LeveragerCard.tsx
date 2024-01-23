@@ -18,7 +18,6 @@ import styled from 'styled-components'
 type CardProps = {
   collateralAsset?: AssetMarketData | undefined
   icon: StaticImageData
-  assetAddress?: string | undefined
   borrowApy: BigNumber
   symbol: AssetSymbol
   balance: BigNumber
@@ -29,7 +28,6 @@ export const LeveragerCard = asStyled<CardProps>(
   ({
     collateralAsset,
     icon,
-    assetAddress,
     borrowApy,
     balance,
     symbol,
