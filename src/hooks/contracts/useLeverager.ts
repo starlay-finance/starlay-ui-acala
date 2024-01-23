@@ -65,6 +65,24 @@ export const useLeverager = () => {
     },
     [account, handleTx, leveragerLdot, signer],
   )
+  const closeLeverageDOT = useCallback(
+    async (param: {
+      dotAddress: EthereumAddress
+      ldotAddress: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account || !signer)
+        throw new Error('Unexpected state')
+      return handleTx(
+        await leveragerLdot.closeLeverageDOT({
+          user: account,
+          dotAddress: param.dotAddress,
+          ldotAddress: param.ldotAddress,
+        }),
+        signer,
+      )
+    },
+    [account, handleTx, leveragerLdot, signer],
+  )
 
   const getStatusAfterLeverageDotTransaction = useCallback(
     async (param: {
@@ -139,5 +157,6 @@ export const useLeverager = () => {
     getLTV,
     getExchangeRateDOT2LDOT,
     leverageDotFromPosition,
+    closeLeverageDOT,
   }
 }

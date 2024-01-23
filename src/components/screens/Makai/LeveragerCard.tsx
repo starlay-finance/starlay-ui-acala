@@ -5,6 +5,7 @@ import { FC, ReactNode, useEffect, useMemo, useState } from 'react'
 import { Image } from 'src/components/elements/Image'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
+import { ASSET_ADDRESSES } from 'src/constants/assets'
 import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import { darkGray, primary, purple } from 'src/styles/colors'
@@ -17,6 +18,7 @@ import styled from 'styled-components'
 type CardProps = {
   collateralAsset?: AssetMarketData | undefined
   icon: StaticImageData
+  assetAddress?: string | undefined
   borrowApy: BigNumber
   symbol: AssetSymbol
   balance: BigNumber
@@ -27,13 +29,14 @@ export const LeveragerCard = asStyled<CardProps>(
   ({
     collateralAsset,
     icon,
+    assetAddress,
     borrowApy,
     balance,
     symbol,
     onClick,
     className,
   }) => {
-    const { getLTV } = useLeverager()
+    const { getLTV, closeLeverageDOT } = useLeverager()
     const [maxLeverage, setMaxLeverage] =
       useState<number | undefined>(undefined)
     const { apy } = useLdotApy()
@@ -97,6 +100,10 @@ export const LeveragerCard = asStyled<CardProps>(
           {
             label: t`Create`,
             onClick: onClick,
+          },
+          {
+            label: t`Close`,
+            onClick: () => { closeLeverageDOT({ dotAddress: ASSET_ADDRESSES[symbol] as EthereumAddress, ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress }) },
           },
         ]}
       />
@@ -185,6 +192,7 @@ const LeveragerCardComponent = styled<
 
 const ActionsDiv = styled.div`
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   column-gap: 16px;
@@ -247,6 +255,9 @@ const Button = styled.button`
   backdrop-filter: blur(16px) brightness(1.08);
   text-align: center;
   transition: all 0.2s ease-in;
+  :last-child {
+    background-color: ${darkGray};
+  }
 `
 const LeveragerCardDiv = styled.div`
   display: flex;

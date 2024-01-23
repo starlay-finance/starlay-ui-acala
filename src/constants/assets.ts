@@ -10,6 +10,12 @@ export const LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS: {
   ]: typeof LISTED_ASSET_SYMBOLS[number]
 } = { DOT: 'LDOT' }
 
+export const ASSET_ADDRESSES: {
+  [key: typeof LEVERAGEABLE_ASSET_SYMBOLS[number]]: string
+} = {
+  DOT: '0x0000000000000000000100000000000000000002',
+}
+
 export const SYMBOL_ORDER: Record<AssetSymbol, number> =
   LISTED_ASSET_SYMBOLS.reduce(
     (res, symbol, idx) => ({

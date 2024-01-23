@@ -14,13 +14,11 @@ import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioContro
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import {
   blue,
-  darkGray,
   darkRed,
-  lightBlack,
   lightYellow,
   offWhite,
   purple,
-  trueWhite,
+  trueWhite
 } from 'src/styles/colors'
 import { fontWeightBold, fontWeightHeavy } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
@@ -386,6 +384,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
 
 const Description = styled.div`
   p {
+    font-size: 14px;
     line-height: 1.5;
     color: ${offWhite};
   }
@@ -553,7 +552,7 @@ const AssetDropDown = styled.div<{ $isOpen: boolean }>`
   overflow: hidden;
   visibility: hidden;
   opacity: 0;
-  background-color: ${lightBlack};
+  background-color: #181818;
   ${({ $isOpen }) =>
     $isOpen &&
     css`
@@ -583,6 +582,6 @@ const DropDownDiv = styled.div<{ $isActive: boolean }>`
   ${({ $isActive }) =>
     $isActive &&
     css`
-      background-color: ${darkGray};
+      background-color: #222222;
     `}
 `
