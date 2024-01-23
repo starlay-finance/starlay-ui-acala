@@ -1,5 +1,6 @@
 import { t } from '@lingui/macro'
 import { BigNumber, valueToBigNumber } from '@starlay-finance/math-utils'
+import debounce from 'debounce'
 import { StaticImageData } from 'next/image'
 import { FC, ReactNode, useEffect, useMemo, useState } from 'react'
 import { Image } from 'src/components/elements/Image'
@@ -101,7 +102,19 @@ export const LeveragerCard = asStyled<CardProps>(
           },
           {
             label: t`Close`,
-            onClick: () => { closeLeverageDOT({ dotAddress: ASSET_ADDRESSES[symbol] as EthereumAddress, ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress }) },
+            onClick: debounce(
+              () => {
+                closeLeverageDOT({
+                  dotAddress: ASSET_ADDRESSES[symbol] as EthereumAddress,
+                  ldotAddress:
+                    collateralAsset?.underlyingAsset as EthereumAddress,
+                })
+              },
+              2000,
+              {
+                immediate: true,
+              },
+            ),
           },
         ]}
       />
