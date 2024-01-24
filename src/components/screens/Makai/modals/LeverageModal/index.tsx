@@ -20,18 +20,24 @@ export const Leverager: FC<
           Omit<
             Omit<
               Omit<
-                Omit<LeveragerModalBodyProps, 'startLeverager'>,
-                'getStatusAfterLeverageDotTransaction'
+                Omit<
+                  Omit<
+                    Omit<LeveragerModalBodyProps, 'startLeverager'>,
+                    'getStatusAfterLeverageDotTransaction'
+                  >,
+                  'getLTV'
+                >,
+                'getExchangeRateDOT2LDOT'
               >,
-              'getLTV'
+              'startLeveragerDotFromPosition'
             >,
-            'getExchangeRateDOT2LDOT'
+            'getStatusAfterLeverageDotFromPositionTransaction'
           >,
-          'startLeveragerDotFromPosition'
+          'closeLeverageDOT'
         >,
-        'getStatusAfterLeverageDotFromPositionTransaction'
+        'getExchangeRateLDOT2DOT'
       >,
-      'closeLeverageDOT'
+      'getLt'
     >>
 > = ({ close, ...props }) => {
   const { data: marketData } = useMarketData()
@@ -47,6 +53,8 @@ export const Leverager: FC<
     getStatusAfterLeverageDotTransaction,
     getStatusAfterLeverageDotFromPositionTransaction,
     getLTV,
+    getLt,
+    getExchangeRateLDOT2DOT,
     getExchangeRateDOT2LDOT,
     closeLeverageDOT
   } = useLeverager()
@@ -103,7 +111,13 @@ export const Leverager: FC<
               asset: collateralAsset?.underlyingAsset as EthereumAddress,
             })
           }
+          getLt={() =>
+            getLt({
+              asset: collateralAsset?.underlyingAsset as EthereumAddress,
+            })
+          }
           getExchangeRateDOT2LDOT={() => getExchangeRateDOT2LDOT()}
+          getExchangeRateLDOT2DOT={() => getExchangeRateLDOT2DOT()}
           closeLeverageDOT={() => closeLeverageDOT({
             dotAddress: ASSET_ADDRESSES[asset.symbol] as EthereumAddress,
             ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,

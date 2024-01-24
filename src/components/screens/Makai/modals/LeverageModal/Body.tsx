@@ -11,16 +11,15 @@ import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { ShimmerPlaceholder } from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
+import { TooltipMessage } from 'src/components/parts/ToolTip'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import {
-  blue,
-  darkRed,
+  blue, darkGray, darkRed,
   lightYellow,
-  offWhite,
-  purple,
+  offWhite, primary, purple,
   trueWhite
 } from 'src/styles/colors'
-import { fontWeightBold, fontWeightHeavy } from 'src/styles/font'
+import { fontWeightBold, fontWeightHeavy, fontWeightSemiBold } from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetMarketData } from 'src/types/models'
 import {
@@ -60,7 +59,9 @@ export type LeveragerModalBodyProps = Omit<
     leverage: BigNumber,
   ) => Promise<any>
   getLTV: () => Promise<string>
+  getLt: () => Promise<string>
   getExchangeRateDOT2LDOT: () => Promise<string>
+  getExchangeRateLDOT2DOT: () => Promise<string>
   max?: boolean
   collateralAsset?: AssetMarketData
 }
@@ -72,6 +73,8 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   getStatusAfterLeverageDotTransaction,
   getStatusAfterLeverageDotFromPositionTransaction,
   getLTV,
+  getLt,
+  getExchangeRateLDOT2DOT,
   getExchangeRateDOT2LDOT,
   max,
   ...estimationParams
@@ -90,6 +93,8 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
   const [maxLeverage, setMaxLeverage] = useState<number>()
   const [exchangeRateDOT2LDOT, setExchangeRateDOT2LDOT] = useState<string>('')
+  const [exchangeRateLDOT2DOT, setExchangeRateLDOT2DOT] = useState<string>('')
+  const [liquidationThreshold, setLiquidationThreshold] = useState<string>('')
   const [isCloseLoading, setIsCloseLoading] = useState(false)
   const [isLeverageLoading, setIsLeverageLoading] = useState(false)
 
@@ -114,18 +119,22 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ltv, exchangeRateDOT2LDOT] = await Promise.all([
+        const [ltv, exchangeRateDOT2LDOT, lt, exchangeRateLDOT2DOT] = await Promise.all([
           getLTV(),
           getExchangeRateDOT2LDOT(),
+          getLt(),
+          getExchangeRateLDOT2DOT()
         ])
         setMaxLeverage(10000 / (10000 - Number(ltv)) - 0.1)
         setExchangeRateDOT2LDOT(exchangeRateDOT2LDOT)
+        setExchangeRateLDOT2DOT(exchangeRateLDOT2DOT)
+        setLiquidationThreshold(lt)
       } catch (error) {
         console.error('Error fetching data:', error)
       }
     }
     fetchData()
-  }, [getExchangeRateDOT2LDOT, getLTV])
+  }, [getExchangeRateDOT2LDOT, getExchangeRateLDOT2DOT, getLTV, getLt])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -168,6 +177,25 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     setIsPosition(true)
     setIsAssetDropDownOpen(false)
   }
+
+  const liquidationPrice = useMemo(() => {
+    if (!exchangeRateDOT2LDOT) return 0
+    return (Number(leverage
+      .minus(valueToBigNumber(1))
+      .dividedBy(
+        leverage.multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18)))
+      || BN_ZERO) * 10000 / Number(liquidationThreshold))
+  }, [exchangeRateDOT2LDOT, leverage, liquidationThreshold])
+
+  const currentPrice = useMemo(() => {
+    if (!exchangeRateLDOT2DOT) return 0
+    return Number(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+  }, [exchangeRateLDOT2DOT])
+
+  const offPeg = useMemo(() => {
+    if (currentPrice === 0) return 0
+    return ((1 - (liquidationPrice / currentPrice)) * 100).toFixed(2)
+  }, [currentPrice, liquidationPrice])
 
   return (
     <WrapperDiv>
@@ -353,7 +381,31 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                   <WarningDiv>
                     <p>Below liquidation threshold.</p>
                   </WarningDiv>
-                )}
+                )
+              }
+              <DetailsDiv>
+                <DetailDiv>
+                  <span>
+                    <TooltipMessage message="The ratio between LDOT and DOT at which your position would fall below the liquidation threshold." />
+                    Liquidation price:
+                  </span>
+                  <span>{liquidationPrice.toFixed(2)} DOT/LDOT</span>
+                </DetailDiv>
+                <DetailDiv>
+                  <span>
+                    <TooltipMessage message="The current ratio between LDOT and DOT." />
+                    Current price:
+                  </span>
+                  <span>{currentPrice.toFixed(2)} DOT/LDOT</span>
+                </DetailDiv>
+                <DetailDiv>
+                  <span>
+                    <TooltipMessage message="The percentage deviation from LDOT to DOT price ratio that would need to happen for your position to be liquidated." />
+                    Off-peg % to liquidation:
+                  </span>
+                  <span>{offPeg} %</span>
+                </DetailDiv>
+              </DetailsDiv>
             </>
           )}
         <ActionButton
@@ -467,7 +519,7 @@ const WrapperDiv = styled.div`
       margin-top: 24px;
     }
     ${SimpleCtaButton} {
-      margin-top: 24px;
+      margin-top: 16px;
     }
     ${AmountInput} {
       input {
@@ -614,6 +666,33 @@ const DropDownDiv = styled.div<{ $isActive: boolean }>`
 const ActionButton = styled(SimpleCtaButton)`
   height: 40px;
   @media ${breakpoint.xl} {
-    height: 50px;
+    height: 40px;
+  }
+`
+
+const DetailsDiv = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 12px;
+  margin-top: 24px;
+  padding: 16px 0;
+  border-top: 1px solid ${darkGray}7a;
+  border-bottom: 1px solid ${darkGray}7a;
+  font-size: 14px;
+  font-weight: ${fontWeightSemiBold};
+`
+
+const DetailDiv = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  > span:first-child {
+    display: flex;
+  }
+  > span:last-child {
+    color: ${primary}a3;
+  }
+  ${TooltipMessage} {
+    width: 280px;
   }
 `
