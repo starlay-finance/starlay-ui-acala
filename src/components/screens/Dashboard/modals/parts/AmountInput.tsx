@@ -76,7 +76,7 @@ export const AmountInput = asStyled<AmountInputProps>(
   },
 )``
 
-const Control = styled.div`
+export const Control = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;

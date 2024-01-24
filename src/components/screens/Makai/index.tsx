@@ -9,8 +9,8 @@ import { fontWeightHeavy } from 'src/styles/font'
 import { breakpoint, contentMaxWidthCssVar } from 'src/styles/mixins'
 import { APP } from 'src/utils/routes'
 import styled from 'styled-components'
+import { MakaiInfo } from './MakaiInfo'
 import { MakaiMarkets } from './MakaiMarkets'
-import { UnclaimedReward } from './UnclaimedReward'
 
 export const Makai = () => {
   const { data } = useNetworkType()
@@ -25,8 +25,9 @@ export const Makai = () => {
       <Main>
         <AppBackground />
         <Content>
+          <MakaiInfo />
           <MakaiMarkets />
-          <UnclaimedReward />
+          {/* <MakaiFAQ /> */}
         </Content>
         <AppMenu isOpen={isMenuOpen} close={() => setMenuOpen(false)} />
       </Main>
@@ -49,22 +50,15 @@ const Main = styled.main`
   ${Content} {
     margin-top: 40px;
     display: flex;
+    flex-direction: column;
     column-gap: 24px;
     ${MakaiMarkets} {
       flex: 1;
-    }
-    ${UnclaimedReward} {
-      display: none;
-      width: 400px;
-      max-height: 294px;
     }
   }
   @media ${breakpoint.xl} {
     ${Content} {
       margin-top: 80px;
-      ${UnclaimedReward} {
-        display: block;
-      }
     }
   }
 `
