@@ -178,6 +178,22 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     setIsAssetDropDownOpen(false)
   }
 
+  const liquidationPrice = useMemo(() => {
+    return (Number(leverage
+      .minus(valueToBigNumber(1))
+      .dividedBy(
+        leverage.multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18)))
+      || BN_ZERO) * 10000 / Number(liquidationThreshold))
+  }, [exchangeRateDOT2LDOT, leverage, liquidationThreshold])
+
+  const currentPrice = useMemo(() => {
+    return Number(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+  }, [exchangeRateLDOT2DOT])
+
+  const offPeg = useMemo(() => {
+    return ((1 - (liquidationPrice / currentPrice)) * 100).toFixed(2)
+  }, [currentPrice, liquidationPrice])
+
   return (
     <WrapperDiv>
       <InfoDiv>
@@ -370,39 +386,21 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                     <TooltipMessage message="The ratio between LDOT and DOT at which your position would fall below the liquidation threshold." />
                     Liquidation price:
                   </span>
-                  <span>
-                    {
-                      (Number(leverage
-                        .minus(valueToBigNumber(1))
-                        .dividedBy(
-                          leverage.multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18)))
-                        || BN_ZERO) * 10000 / Number(liquidationThreshold)).toFixed(2)
-                    } DOT/LDOT
-                  </span>
+                  <span>{liquidationPrice.toFixed(2)} DOT/LDOT</span>
                 </DetailDiv>
                 <DetailDiv>
                   <span>
                     <TooltipMessage message="The current ratio between LDOT and DOT." />
                     Current price:
                   </span>
-                  <span>{formatAmt(
-                    normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18),
-                    { decimalPlaces: 2 },
-                  )} DOT/LDOT</span>
+                  <span>{currentPrice.toFixed(2)} DOT/LDOT</span>
                 </DetailDiv>
                 <DetailDiv>
                   <span>
                     <TooltipMessage message="The percentage deviation from LDOT to DOT price ratio that would need to happen for your position to be liquidated." />
                     Off-peg % to liquidation:
                   </span>
-                  <span>{((1 - ((Number(leverage
-                    .minus(valueToBigNumber(1))
-                    .dividedBy(
-                      leverage.multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18)))
-                    || BN_ZERO) * 10000 / Number(liquidationThreshold)) / Number(formatAmt(
-                      normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18),
-                      { decimalPlaces: 2 },
-                    )))) * 100).toFixed(2)} %</span>
+                  <span>{offPeg} %</span>
                 </DetailDiv>
               </DetailsDiv>
             </>
