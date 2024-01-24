@@ -142,6 +142,17 @@ export const useLeverager = () => {
     [leveragerLdot],
   )
 
+  const getLt = useCallback(
+    async (param: { asset: EthereumAddress }) => {
+      if (!leveragerLdot) {
+        return '0'
+      }
+      const lt = await leveragerLdot.lt(param.asset)
+      return lt
+    },
+    [leveragerLdot],
+  )
+
   const getExchangeRateDOT2LDOT = useCallback(async () => {
     if (!leveragerLdot) {
       return '0'
@@ -150,12 +161,22 @@ export const useLeverager = () => {
     return exchangeRateDOT2LDOT
   }, [leveragerLdot])
 
+  const getExchangeRateLDOT2DOT = useCallback(async () => {
+    if (!leveragerLdot) {
+      return '0'
+    }
+    const exchangeRateLDOT2DOT = await leveragerLdot.getExchangeRateLDOT2DOT()
+    return exchangeRateLDOT2DOT
+  }, [leveragerLdot])
+
   return {
     leverageLdot,
     getStatusAfterLeverageDotTransaction,
     getStatusAfterLeverageDotFromPositionTransaction,
     getLTV,
+    getLt,
     getExchangeRateDOT2LDOT,
+    getExchangeRateLDOT2DOT,
     leverageDotFromPosition,
     closeLeverageDOT,
   }
