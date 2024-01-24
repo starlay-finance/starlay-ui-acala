@@ -388,22 +388,20 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         >
           {estimation.unavailableReason || t`Start leverager`}
         </ActionButton>
-        {!isPosition && (
-          <ActionButton
-            disabled={isCloseLoading}
-            onClick={debounce(
-              async () => {
-                setIsCloseLoading(true)
-                await closeLeverageDOT()
-                setIsCloseLoading(false)
-              },
-              2000,
-              { immediate: true },
-            )}
-          >
-            {t`Close Leverager`}
-          </ActionButton>
-        )}
+        <ActionButton
+          disabled={isCloseLoading}
+          onClick={debounce(
+            async () => {
+              setIsCloseLoading(true)
+              await closeLeverageDOT()
+              setIsCloseLoading(false)
+            },
+            2000,
+            { immediate: true },
+          )}
+        >
+          {t`Close Leverager`}
+        </ActionButton>
       </ActionDiv>
     </WrapperDiv>
   )
