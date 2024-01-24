@@ -179,6 +179,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   }
 
   const liquidationPrice = useMemo(() => {
+    if (!exchangeRateDOT2LDOT) return 0
     return (Number(leverage
       .minus(valueToBigNumber(1))
       .dividedBy(
@@ -187,10 +188,12 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   }, [exchangeRateDOT2LDOT, leverage, liquidationThreshold])
 
   const currentPrice = useMemo(() => {
+    if (!exchangeRateLDOT2DOT) return 0
     return Number(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
   }, [exchangeRateLDOT2DOT])
 
   const offPeg = useMemo(() => {
+    if (currentPrice === 0) return 0
     return ((1 - (liquidationPrice / currentPrice)) * 100).toFixed(2)
   }, [currentPrice, liquidationPrice])
 
