@@ -90,6 +90,9 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
   const [maxLeverage, setMaxLeverage] = useState<number>()
   const [exchangeRateDOT2LDOT, setExchangeRateDOT2LDOT] = useState<string>('')
+  const [isCloseLoading, setIsCloseLoading] = useState(false)
+  const [isLeverageLoading, setIsLeverageLoading] = useState(false)
+
   const estimation = estimateLeverager({
     amount: formattedToBigNumber(supplyAmount),
     asset,
@@ -353,46 +356,54 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                 )}
             </>
           )}
-        <SimpleCtaButton
+        <ActionButton
           onClick={
             isPosition
               ? debounce(
-                () =>
-                  startLeveragerDotFromPosition(
+                async () => {
+                  setIsLeverageLoading(true)
+                  await startLeveragerDotFromPosition(
                     formattedToBigNumber(supplyAmount) || BN_ZERO,
                     leverage,
-                  ),
-                10000,
+                  )
+                  setIsLeverageLoading(false)
+                },
+                2000,
                 { immediate: true },
               )
               : debounce(
-                () =>
-                  startLeverager(
+                async () => {
+                  setIsLeverageLoading(true)
+                  await startLeverager(
                     formattedToBigNumber(supplyAmount) || BN_ZERO,
                     leverage,
-                  ),
-                10000,
+                  )
+                  setIsLeverageLoading(false)
+                },
+                2000,
                 { immediate: true },
               )
           }
-          disabled={!!estimation.unavailableReason}
+          disabled={!!estimation.unavailableReason || isLeverageLoading}
         >
           {estimation.unavailableReason || t`Start leverager`}
-        </SimpleCtaButton>
-        {!isPosition &&
-          <SimpleCtaButton
-            onClick={
-              debounce(
-                () =>
-                  closeLeverageDOT(),
-                15000,
-                { immediate: true },
-              )
-            }
+        </ActionButton>
+        {!isPosition && (
+          <ActionButton
+            disabled={isCloseLoading}
+            onClick={debounce(
+              async () => {
+                setIsCloseLoading(true)
+                await closeLeverageDOT()
+                setIsCloseLoading(false)
+              },
+              2000,
+              { immediate: true },
+            )}
           >
             {t`Close Leverager`}
-          </SimpleCtaButton>
-        }
+          </ActionButton>
+        )}
       </ActionDiv>
     </WrapperDiv>
   )
@@ -454,12 +465,12 @@ const WrapperDiv = styled.div`
       padding: 32px;
       font-size: 18px;
     }
-    ${SimpleCtaButton},
     ${Balance} {
-      margin-top: 32px;
+      margin-top: 24px;
     }
-  }
-  @media ${breakpoint.xl} {
+    ${SimpleCtaButton} {
+      margin-top: 24px;
+    }
     ${AmountInput} {
       input {
         width: 100px !important;
@@ -600,4 +611,11 @@ const DropDownDiv = styled.div<{ $isActive: boolean }>`
     css`
       background-color: #222222;
     `}
+`
+
+const ActionButton = styled(SimpleCtaButton)`
+  height: 40px;
+  @media ${breakpoint.xl} {
+    height: 50px;
+  }
 `

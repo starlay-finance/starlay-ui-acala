@@ -1,7 +1,6 @@
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
 import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
-import { useLeverager } from 'src/hooks/contracts/useLeverager'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
@@ -17,7 +16,6 @@ export const MakaiMarkets = asStyled(({ className }) => {
   const { data: balances } = useWalletBalance()
   const { open: openWalletModal } = useWalletModal()
   const { open: openLeveragerModal } = useLeverageModal()
-  const { closeLeverageDOT } = useLeverager()
 
   const {
     assets,
