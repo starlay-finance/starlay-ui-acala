@@ -32,7 +32,7 @@
     "@react-spring/web": "^9.7.2",
     "@safe-global/safe-apps-provider": "^0.18.0",
     "@safe-global/safe-apps-sdk": "^8.1.0",
-    "@starlay-finance/contract-helpers": "0.0.18-4f8f86febe92853ca93546b7df2ddf37b2ba3d7f.0",
+    "@starlay-finance/contract-helpers": "0.0.18-2174bde04e3f8624955d88b7b218cad198986728.0",
     "@starlay-finance/math-utils": "0.0.18",
     "@use-gesture/react": "^10.2.27",
     "@web3-react/core": "^8.2.3",
