@@ -134,7 +134,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
       }
     }
     fetchData()
-  }, [])
+  }, [getExchangeRateDOT2LDOT, getExchangeRateLDOT2DOT, getLTV, getLt])
 
   useEffect(() => {
     const fetchData = async () => {
