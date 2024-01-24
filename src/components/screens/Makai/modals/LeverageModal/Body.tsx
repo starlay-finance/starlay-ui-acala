@@ -108,7 +108,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         variableBorrowAPY.toNumber() +
         (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
       100
-    return netApy > 0 ? netApy : 0
+    return netApy
   }, [leverage, apy, variableBorrowAPY, collateralAsset])
 
   useEffect(() => {

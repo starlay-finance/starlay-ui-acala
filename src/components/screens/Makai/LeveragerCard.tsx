@@ -45,7 +45,7 @@ export const LeveragerCard = asStyled<CardProps>(
           borrowApy.toNumber() +
           (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
         100
-      return maxApy > 0 ? maxApy : 0
+      return maxApy
     }, [apy, borrowApy, maxLeverage, collateralAsset])
 
     useEffect(() => {

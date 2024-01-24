@@ -26,7 +26,7 @@ const data = {
     },
     {
       title: "What are the risks with leveraged staking?",
-      content: "Leveraged staking involves several risks, including the risk of liquidation, potential deviations in the value of liquid staking tokens compared to DOT, and fluctuations in DOT borrowing rates within the protocol. Due to these risks, we advise caution and recommend against using the maximum leverage available.",
+      content: "Leveraged staking involves several risks, including the risk of liquidation, potential deviations in the value of liquid staking tokens compared to DOT, and fluctuations in DOT borrowing rates within the protocol.",
     },
   ],
 };
