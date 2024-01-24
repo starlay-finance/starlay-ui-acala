@@ -11,7 +11,7 @@ export const MakaiInfo = asStyled(({ className }) => {
     <MakaiInfoSection className={className}>
       <InfoTitle>Leveraged DOT Staking on Starlay</InfoTitle>
       <InfoContent>Enhance your staking rewards by utilizing liquid staking tokens such as LDOT and DOT as collateral. Leverage these assets against DOT on Starlay, capitalizing on the platform&apos;s robust features to maximize your staking efficiency and returns.</InfoContent>
-      <InfoLink><Link href="https://asynmatrix.notion.site/LSTs-and-leveraged-staking-strategies-cacf1d3683f54cfa93158f4953926fed">{t`Learn more`}</Link></InfoLink>
+      <InfoLink><Link href="https://medium.com/@starlay_fi/lsts-and-leveraged-staking-strategies-5c50c9f007c4">{t`Learn more`}</Link></InfoLink>
     </MakaiInfoSection>
   )
 })``
