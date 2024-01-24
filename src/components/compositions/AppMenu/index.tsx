@@ -63,7 +63,7 @@ const MenuItems: FC<{ showClaim: VoidFunction }> = ({ showClaim }) => {
 
       {/* <Link
         href={matchPath(pathname, MAKAI) ? '' : evmOnly(MAKAI, network)}
-      >{t`Makai`}</Link> */}
+      >{t`Makai`}</Link>
       {/* <Link href="">{t`LAY/veLAY`}</Link>
       <button onClick={showClaim} disabled={!account || network !== 'EVM'}>
         Claim LAY

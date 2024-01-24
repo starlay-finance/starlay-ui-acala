@@ -29,20 +29,20 @@ export const ResponsiveModalContainer = forwardRef<
 export const DefaultModalContainer = forwardRef<
   ModalHandler,
   ModalContainerProps
->(({ isOpen, close, children }) => {
+>((props, ref) => {
   return (
-    <Overlay onClick={close} isOpen={isOpen}>
-      <Contents onClick={(e) => e.stopPropagation()}>{children}</Contents>
+    <Overlay onClick={props.close} isOpen={props.isOpen}>
+      <Contents onClick={(e) => e.stopPropagation()}>{props.children}</Contents>
     </Overlay>
   )
 })
 export const LoadingModalContainer = forwardRef<
   ModalHandler,
   ModalContainerProps
->(({ isOpen, children }) => {
+>((props, ref) => {
   return (
-    <LoadingOverlay isOpen={isOpen} bgColor={trueBlack}>
-      <div>{children}</div>
+    <LoadingOverlay isOpen={props.isOpen} bgColor={trueBlack}>
+      <div>{props.children}</div>
     </LoadingOverlay>
   )
 })

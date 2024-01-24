@@ -169,7 +169,7 @@ export const DepositModalBody: FC<DepositModalBodyProps> = ({
         </NumberItems>
         {activeTab === 'deposit' ? (
           <SimpleCtaButton
-            onClick={debounce(() => deposit(depositAmountBn!), 2000, {
+            onClick={debounce(() => deposit(depositAmountBn!), 5000, {
               immediate: true,
             })}
             disabled={!!estimation.unavailableReason}
@@ -178,7 +178,7 @@ export const DepositModalBody: FC<DepositModalBodyProps> = ({
           </SimpleCtaButton>
         ) : (
           <SimpleCtaButton
-            onClick={debounce(() => withdraw(withdrawalAmountBn!, all), 2000, { immediate: true })}
+            onClick={debounce(() => withdraw(withdrawalAmountBn!, all), 5000, { immediate: true })}
             disabled={!!estimation.unavailableReason}
           >
             {estimation.unavailableReason || t`Withdraw`}

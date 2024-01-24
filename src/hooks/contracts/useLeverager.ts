@@ -1,10 +1,8 @@
-import { InterestRate } from '@starlay-finance/contract-helpers'
 import { BigNumber } from '@starlay-finance/math-utils'
+import { useCallback } from 'react'
 import { getMarketConfigEVM, getNetworkConfigEVM } from 'src/libs/config'
 import { leveragerContract } from 'src/libs/leverager'
-import { BASE_ASSET_DUMMY_ADDRESS } from 'src/libs/pool-data-provider/converters/constants'
 import { EthereumAddress } from 'src/types/web3'
-import { equals } from 'src/utils/address'
 import useSWRImmutable from 'swr/immutable'
 import { useEVMWallet } from '../useEVMWallet'
 import { useStaticRPCProviderEVM } from '../useStaticRPCProviderEVM'
@@ -13,60 +11,152 @@ import { useTxHandler } from './txHandler'
 export const useLeverager = () => {
   const { data: provider } = useStaticRPCProviderEVM()
   const { account, signer } = useEVMWallet()
-  const { data: leverager } = useSWRImmutable(
-    provider && ['leverager', provider.chainId],
+  const { data: leveragerLdot } = useSWRImmutable(
+    provider && ['leverageLdot', provider.chainId],
     () => {
-      const { LEVERAGER } = getMarketConfigEVM(provider!.chainId).addresses
-      if (!LEVERAGER) return undefined
-      return leveragerContract(provider!, LEVERAGER)
+      const { LEVERAGER_LDOT } = getMarketConfigEVM(provider!.chainId).addresses
+      const { walletBalanceProvider } = getNetworkConfigEVM(
+        provider!.chainId,
+      ).addresses
+      if (!LEVERAGER_LDOT) return undefined
+      return leveragerContract(provider!, LEVERAGER_LDOT, walletBalanceProvider)
     },
   )
 
   const { handleTx } = useTxHandler()
 
-  const loop = async (param: {
-    amount: BigNumber
-    asset: EthereumAddress
-    debtToken: EthereumAddress
-    borrowRatio: BigNumber
-    loopCount: number
-  }) => {
-    if (!leverager || !account || !signer) throw new Error('Unexpected state')
-    return handleTx(
-      await leverager.loop({
-        user: account,
-        reserve: param.asset,
-        amount: param.amount.toString(),
-        debtToken: param.debtToken,
-        interestRateMode: InterestRate.Variable,
-        borrowRatio: param.borrowRatio.toFixed(4, BigNumber.ROUND_FLOOR),
-        loopCount: param.loopCount.toFixed(0),
-      }),
-      signer,
-    )
-  }
+  const leverageLdot = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account || !signer)
+        throw new Error('Unexpected state')
+      return handleTx(
+        await leveragerLdot.leverageDot({
+          user: account,
+          token: param.asset,
+          borrow_dot_amount: param.borrowAmount.toString(),
+          repay_dot_amount: param.amount.toString(),
+        }),
+        signer,
+      )
+    },
+    [account, handleTx, leveragerLdot, signer],
+  )
+  const leverageDotFromPosition = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account || !signer)
+        throw new Error('Unexpected state')
+      return handleTx(
+        await leveragerLdot.leverageDotFromPosition({
+          user: account,
+          token: param.asset,
+          borrow_dot_amount: param.borrowAmount.toString(),
+          supply_dot_amount: param.amount.toString(),
+        }),
+        signer,
+      )
+    },
+    [account, handleTx, leveragerLdot, signer],
+  )
+  const closeLeverageDOT = useCallback(
+    async (param: {
+      dotAddress: EthereumAddress
+      ldotAddress: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account || !signer)
+        throw new Error('Unexpected state')
+      return handleTx(
+        await leveragerLdot.closeLeverageDOT({
+          user: account,
+          dotAddress: param.dotAddress,
+          ldotAddress: param.ldotAddress,
+        }),
+        signer,
+      )
+    },
+    [account, handleTx, leveragerLdot, signer],
+  )
 
-  const closeLoop = async (param: {
-    underlyingAsset: EthereumAddress
-    lToken: EthereumAddress
-  }) => {
-    if (!leverager || !account || !signer) throw new Error('Unexpected state')
-    const { baseAsset } = getNetworkConfigEVM(provider!.chainId)
+  const getStatusAfterLeverageDotTransaction = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account)
+        return {
+          totalCollateralAfterTx: '0',
+          totalDebtAfterTx: '0',
+          healthFactorAfterTx: '0',
+        }
+      const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
+        await leveragerLdot.getStatusAfterLeverageDotTransaction({
+          user: account,
+          token: param.asset,
+          borrow_dot_amount: param.borrowAmount.toString(),
+          repay_dot_amount: param.amount.toString(),
+        })
+      return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+    },
+    [account, leveragerLdot],
+  )
+  const getStatusAfterLeverageDotFromPositionTransaction = useCallback(
+    async (param: {
+      borrowAmount: BigNumber
+      amount: BigNumber
+      asset: EthereumAddress
+    }) => {
+      if (!leveragerLdot || !account)
+        return {
+          totalCollateralAfterTx: '0',
+          totalDebtAfterTx: '0',
+          healthFactorAfterTx: '0',
+        }
+      const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
+        await leveragerLdot.getStatusAfterLeverageDotFromPositionTransaction({
+          user: account,
+          token: param.asset,
+          borrow_dot_amount: param.borrowAmount.toString(),
+          supply_dot_amount: param.amount.toString(),
+        })
+      return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+    },
+    [account, leveragerLdot],
+  )
 
-    return handleTx(
-      await leverager.close({
-        user: account,
-        reserve: !equals(param.underlyingAsset, BASE_ASSET_DUMMY_ADDRESS)
-          ? param.underlyingAsset
-          : baseAsset.wrapperAddress,
-        lToken: param.lToken,
-      }),
-      signer,
-    )
-  }
+  const getLTV = useCallback(
+    async (param: { asset: EthereumAddress }) => {
+      if (!leveragerLdot) {
+        return '0'
+      }
+      const ltv = await leveragerLdot.ltv(param.asset)
+      return ltv
+    },
+    [leveragerLdot],
+  )
+
+  const getExchangeRateDOT2LDOT = useCallback(async () => {
+    if (!leveragerLdot) {
+      return '0'
+    }
+    const exchangeRateDOT2LDOT = await leveragerLdot.getExchangeRateDOT2LDOT()
+    return exchangeRateDOT2LDOT
+  }, [leveragerLdot])
 
   return {
-    loop,
-    closeLoop,
+    leverageLdot,
+    getStatusAfterLeverageDotTransaction,
+    getStatusAfterLeverageDotFromPositionTransaction,
+    getLTV,
+    getExchangeRateDOT2LDOT,
+    leverageDotFromPosition,
+    closeLeverageDOT,
   }
 }

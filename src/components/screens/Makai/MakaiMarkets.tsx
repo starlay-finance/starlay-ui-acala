@@ -1,169 +1,79 @@
-import { t } from '@lingui/macro'
-import { BigNumber } from '@starlay-finance/math-utils'
-import { useRouter } from 'next/router'
-import { useEffect } from 'react'
-import {
-  AssetTd,
-  MarketTable,
-  TableContainer,
-} from 'src/components/compositions/Markets/MarketTable'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
-import { BlinkWrapper } from 'src/components/parts/Number/Blink'
+import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
-import { makaiHoverGradients } from 'src/styles/mixins'
-import { AssetMarketData, User } from 'src/types/models'
-import { calculateLoopingAPR, ltvToLoopingLeverage } from 'src/utils/calculator'
+import { breakpoint } from 'src/styles/mixins'
 import { symbolSorter } from 'src/utils/market'
-import { BN_ZERO, formatAmt, formatPct } from 'src/utils/number'
-import styled, { css } from 'styled-components'
-import { useLoopingModal } from './modals/LoopingModal'
-
-const COLUMNS = [
-  { id: 'asset', name: t`Asset`, widthRatio: 4 },
-  { id: 'makaiAPR', name: t`Makai APR`, widthRatio: 3 },
-  { id: 'wallet', name: t`Wallet_Balance`, widthRatio: 5 },
-]
+import styled from 'styled-components'
+import { LeveragerCard } from './LeveragerCard'
+import { useLeverageModal } from './modals/LeverageModal'
 
 export const MakaiMarkets = asStyled(({ className }) => {
-  const { query, replace, pathname } = useRouter()
-
   const { data: marketData } = useMarketData()
   const { data: userData } = useUserData()
   const { data: balances } = useWalletBalance()
   const { open: openWalletModal } = useWalletModal()
-  const { open: openLoopingModal } = useLoopingModal()
+  const { open: openLeveragerModal } = useLeverageModal()
+
   const {
     assets,
-    marketReferenceCurrencyPriceInUSD = BN_ZERO,
-    marketReferenceCurrencyDecimals = 0,
   } = marketData || {}
   const markets = (assets || [])
     .filter((each) => each.isActive)
+    .filter((each) => LEVERAGEABLE_ASSET_SYMBOLS.includes(each.symbol))
     .sort(symbolSorter)
-
-  const loopingParams = (asset: AssetMarketData, userData: User) => ({
-    asset,
-    marketReferenceCurrencyPriceInUSD,
-    marketReferenceCurrencyDecimals,
-    userSummary: userData.summary,
-    userAssetBalance: {
-      ...userData.balanceByAsset[asset.symbol],
-      inWallet: balances[asset.symbol],
-    },
-  })
-
-  useEffect(() => {
-    if (!assets || !userData) return
-    if (typeof query.asset !== 'string') return
-    const asset = assets.find((each) => each.symbol === query.asset)
-    if (!asset) return
-    replace(pathname, undefined, { shallow: true })
-    openLoopingModal({ ...loopingParams(asset, userData), max: true })
-  }, [userData, assets, query])
 
   return (
     <MakaiMarketsSection className={className}>
-      <TableContainer>
-        <MarketTable
-          caption={t`Makai Markets`}
-          columns={COLUMNS}
-          rows={markets.map((asset) =>
-            marketRow({
-              asset,
-              balance: balances[asset.symbol],
-              onClick: userData
+      <Section className={className}>
+        {
+          markets.map((asset) => (
+            <LeveragerCard
+              key={asset.symbol}
+              icon={asset.icon}
+              borrowApy={asset.variableBorrowAPY}
+              collateralAsset={assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])}
+              symbol={asset.symbol || asset.displaySymbol}
+              balance={balances[asset.symbol]}
+              onClick={userData
                 ? () =>
-                  openLoopingModal({
+                  openLeveragerModal({
+                    collateralAsset: assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol]),
                     asset,
-                    marketReferenceCurrencyPriceInUSD,
-                    marketReferenceCurrencyDecimals,
-                    userSummary: userData.summary,
                     userAssetBalance: {
                       ...userData.balanceByAsset[asset.symbol],
                       inWallet: balances[asset.symbol],
                     },
+                    isPosition: false
                   })
-                : openWalletModal,
-            }),
-          ).filter((row) => {
-            if (row.isDepositInactive || row.isBorrowInactive) {
-              return false
-            }
-            return true
-          })}
-          hoverGradients={makaiHoverGradients}
-          rowDisabledStyle={rowDisabledStyle}
-        />
-      </TableContainer>
+                : openWalletModal}
+            />
+          ))
+        }
+
+        <EmptyDiv />
+        <EmptyDiv />
+        <EmptyDiv />
+      </Section>
     </MakaiMarketsSection>
   )
 })``
 
-const marketRow = ({
-  asset,
-  balance,
-  onClick,
-}: {
-  asset: AssetMarketData
-  balance: BigNumber
-  onClick: VoidFunction
-}) => {
-  const {
-    symbol,
-    displaySymbol,
-    icon,
-    depositIncentiveAPR,
-    variableBorrowIncentiveAPR,
-    baseLTVasCollateral,
-    usageAsCollateralEnabled,
-    isDepositInactive,
-    isBorrowInactive,
-    borrowUnsupported,
-    makaiUnsupported,
-  } = asset
-  const makaiAPR = calculateLoopingAPR({
-    leverage: ltvToLoopingLeverage(baseLTVasCollateral),
-    depositIncentiveAPR,
-    variableBorrowIncentiveAPR,
-  })
-  const displayMakaiAPR = formatPct(makaiAPR, {
-    shorteningThreshold: 99,
-    decimalPlaces: 2,
-  })
-  return {
-    id: symbol,
-    isDepositInactive,
-    isBorrowInactive,
-    onClick,
-    disabled:
-      borrowUnsupported ||
-      makaiUnsupported ||
-      !usageAsCollateralEnabled ||
-      isDepositInactive ||
-      isBorrowInactive,
-    data: {
-      asset: <AssetTd icon={icon} name={displaySymbol || symbol} />,
-      makaiAPR:
-        borrowUnsupported || makaiUnsupported ? (
-          'Coming soon'
-        ) : !usageAsCollateralEnabled ||
-          isDepositInactive ||
-          isBorrowInactive ? (
-          '-'
-        ) : (
-          <BlinkWrapper value={displayMakaiAPR}>{displayMakaiAPR}</BlinkWrapper>
-        ),
-      wallet: formatAmt(balance, { symbol: asset.symbol, decimalPlaces: 2 }),
-    },
-  }
-}
+const MakaiMarketsSection = styled.section``
 
-const rowDisabledStyle = css`
-  opacity: 0.32;
-  pointer-events: none;
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  column-gap: 24px;
+  > * {
+    flex: 1;
+  }
+  @media ${breakpoint.xl} {
+    flex-direction: row;
+
+  }
 `
 
-const MakaiMarketsSection = styled.section``
+const EmptyDiv = styled.div``
