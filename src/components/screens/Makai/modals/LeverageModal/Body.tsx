@@ -14,12 +14,19 @@ import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioContro
 import { TooltipMessage } from 'src/components/parts/ToolTip'
 import { useLdotApy } from 'src/hooks/useLdotApy'
 import {
-  blue, darkGray, darkRed,
+  blue,
+  darkGray,
+  darkRed,
   lightYellow,
-  offWhite, primary, purple,
+  offWhite,
+  purple,
   trueWhite
 } from 'src/styles/colors'
-import { fontWeightBold, fontWeightHeavy, fontWeightSemiBold } from 'src/styles/font'
+import {
+  fontWeightBold,
+  fontWeightHeavy,
+  fontWeightSemiBold,
+} from 'src/styles/font'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetMarketData } from 'src/types/models'
 import {
@@ -90,6 +97,8 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
   const [leverage, setLeverage] = useState<BigNumber>(valueToBigNumber('1.1'))
   const [totalCollateralAfterTx, setTotalCollateralAfterTx] = useState('')
   const [totalDebtAfterTx, setTotalDebtAfterTx] = useState('')
+  const [totalCollateralInDotAfterTx, setTotalCollateralInDotAfterTx] = useState('')
+  const [totalDebtInDotAfterTx, setTotalDebtInDotAfterTx] = useState('')
   const [healthFactorAfterTx, setHealthFactorAfterTx] = useState('')
   const [maxLeverage, setMaxLeverage] = useState<number>()
   const [exchangeRateDOT2LDOT, setExchangeRateDOT2LDOT] = useState<string>('')
@@ -116,15 +125,26 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
     return netApy
   }, [leverage, apy, variableBorrowAPY, collateralAsset])
 
+  const yoy = useMemo(() => {
+    const yoyApy =
+      leverage.toNumber() * (apy - variableBorrowAPY.toNumber())
+    const collateralAmount =
+      normalizeBN(valueToBigNumber(totalCollateralInDotAfterTx), 10).toNumber()
+    const debtAmount = normalizeBN(valueToBigNumber(totalDebtInDotAfterTx), 10).toNumber()
+    const yoy = ((collateralAmount - debtAmount) * yoyApy).toFixed(2)
+    return yoy
+  }, [leverage, apy, variableBorrowAPY, totalCollateralInDotAfterTx, totalDebtInDotAfterTx])
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ltv, exchangeRateDOT2LDOT, lt, exchangeRateLDOT2DOT] = await Promise.all([
-          getLTV(),
-          getExchangeRateDOT2LDOT(),
-          getLt(),
-          getExchangeRateLDOT2DOT()
-        ])
+        const [ltv, exchangeRateDOT2LDOT, lt, exchangeRateLDOT2DOT] =
+          await Promise.all([
+            getLTV(),
+            getExchangeRateDOT2LDOT(),
+            getLt(),
+            getExchangeRateLDOT2DOT(),
+          ])
         setMaxLeverage(10000 / (10000 - Number(ltv)) - 0.1)
         setExchangeRateDOT2LDOT(exchangeRateDOT2LDOT)
         setExchangeRateLDOT2DOT(exchangeRateLDOT2DOT)
@@ -146,6 +166,8 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
           )
           setTotalCollateralAfterTx(result.totalCollateralAfterTx)
           setTotalDebtAfterTx(result.totalDebtAfterTx)
+          setTotalCollateralInDotAfterTx(result.totalCollateralInDotAfterTx)
+          setTotalDebtInDotAfterTx(result.totalDebtInDotAfterTx)
           setHealthFactorAfterTx(result.healthFactorAfterTx)
         } else {
           const result = await getStatusAfterLeverageDotTransaction(
@@ -154,6 +176,8 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
           )
           setTotalCollateralAfterTx(result.totalCollateralAfterTx)
           setTotalDebtAfterTx(result.totalDebtAfterTx)
+          setTotalCollateralInDotAfterTx(result.totalCollateralInDotAfterTx)
+          setTotalDebtInDotAfterTx(result.totalDebtInDotAfterTx)
           setHealthFactorAfterTx(result.healthFactorAfterTx)
         }
       } catch (error) {
@@ -180,11 +204,19 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
 
   const liquidationPrice = useMemo(() => {
     if (!exchangeRateDOT2LDOT) return 0
-    return (Number(leverage
-      .minus(valueToBigNumber(1))
-      .dividedBy(
-        leverage.multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18)))
-      || BN_ZERO) * 10000 / Number(liquidationThreshold))
+    return (
+      (Number(
+        leverage
+          .minus(valueToBigNumber(1))
+          .dividedBy(
+            leverage.multipliedBy(
+              normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18),
+            ),
+          ) || BN_ZERO,
+      ) *
+        10000) /
+      Number(liquidationThreshold)
+    )
   }, [exchangeRateDOT2LDOT, leverage, liquidationThreshold])
 
   const currentPrice = useMemo(() => {
@@ -194,7 +226,7 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
 
   const offPeg = useMemo(() => {
     if (currentPrice === 0) return 0
-    return ((1 - (liquidationPrice / currentPrice)) * 100).toFixed(2)
+    return ((1 - liquidationPrice / currentPrice) * 100).toFixed(2)
   }, [currentPrice, liquidationPrice])
 
   return (
@@ -315,13 +347,13 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
         {isPosition ? (
           <Balance
             label={t`Deposited ${symbol}`}
-            balance={deposited}
+            balance={valueToBigNumber(deposited.toNumber().toFixed(2))}
             symbol={displaySymbol || symbol}
           />
         ) : (
           <Balance
             label={t`Wallet Balance`}
-            balance={inWallet}
+            balance={valueToBigNumber(inWallet.toNumber().toFixed(2))}
             symbol={displaySymbol || symbol}
           />
         )}
@@ -335,42 +367,53 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                 <p>{t`Final state after recipe:`}</p>
               </StatusDiv>
               <StatusInfo>
-                <ResultDiv>
-                  <span>{t`Collateral:`}</span>
+                <DetailDiv>
                   <span>
-                    {formatUSD(
-                      normalizeBN(valueToBigNumber(totalCollateralAfterTx), 18),
-                      { decimalPlaces: 2 },
-                    )}
+                    <TooltipMessage message="The dollar-based value of the LDOT being deposited." />
+                    {t`Collateral:`}
                   </span>
-                </ResultDiv>
-                <ResultDiv>
-                  <span>{t`Debt:`}</span>
+                  <span>{formatUSD(
+                    normalizeBN(valueToBigNumber(totalCollateralAfterTx), 18),
+                    { decimalPlaces: 2 },
+                  )}</span>
+                </DetailDiv>
+                <DetailDiv>
                   <span>
-                    {formatUSD(
-                      normalizeBN(valueToBigNumber(totalDebtAfterTx), 18),
-                      { decimalPlaces: 2 },
-                    )}
+                    <TooltipMessage message="The dollar-based value of the DOT being borrowed." />
+                    {t`Debt:`}
                   </span>
-                </ResultDiv>
-                <ResultDiv>
-                  <span>{t`Health Factor:`}</span>
+                  <span>{formatUSD(
+                    normalizeBN(valueToBigNumber(totalDebtAfterTx), 18),
+                    { decimalPlaces: 2 },
+                  )}</span>
+                </DetailDiv>
+                <DetailDiv>
                   <span>
-                    {formatAmt(
-                      normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
-                      { decimalPlaces: 2 },
-                    )}
+                    <TooltipMessage message="Triggers liquidation. If it falls below 1, the position becomes subject to liquidation." />
+                    {t`Health Factor:`}
                   </span>
-                </ResultDiv>
-                <ResultDiv>
-                  <span>{t`Net APY:`}</span>
+                  <span>{formatAmt(
+                    normalizeBN(valueToBigNumber(healthFactorAfterTx), 18),
+                    { decimalPlaces: 2 },
+                  )}</span>
+                </DetailDiv>
+                <DetailDiv>
                   <span>
-                    {formatAmt(valueToBigNumber(netApy) || BN_ZERO, {
-                      symbol: '%',
-                      decimalPlaces: 2,
-                    })}
+                    <TooltipMessage message="The net APY of your position, based on the current staking rewards of the selected LST and borrow conditions." />
+                    {t`Net APY:`}
                   </span>
-                </ResultDiv>
+                  <span>{formatAmt(valueToBigNumber(netApy) || BN_ZERO, {
+                    symbol: '%',
+                    decimalPlaces: 2,
+                  })}</span>
+                </DetailDiv>
+                <DetailDiv>
+                  <span>
+                    <TooltipMessage message="The expected yearly return of this position based on the current conditions of DOT borrow rate and staking rewards from LDOT." />
+                    YoY Return:
+                  </span>
+                  <span>{yoy} DOT</span>
+                </DetailDiv>
               </StatusInfo>
               {Number(
                 formatAmt(
@@ -381,8 +424,10 @@ export const LeveragerModalBody: FC<LeveragerModalBodyProps> = ({
                   <WarningDiv>
                     <p>Below liquidation threshold.</p>
                   </WarningDiv>
-                )
-              }
+                )}
+              <StatusDiv>
+                <p>{t`Liquidation Info:`}</p>
+              </StatusDiv>
               <DetailsDiv>
                 <DetailDiv>
                   <span>
@@ -467,7 +512,7 @@ const Description = styled.div`
   }
 `
 const StatusDiv = styled.div`
-  margin-top: 24px;
+  margin-top: 16px;
   p {
     font-size: 18px;
     font-weight: ${fontWeightHeavy};
@@ -483,7 +528,7 @@ const WrapperDiv = styled.div`
     margin-top: 16px;
   }
   ${Balance} {
-    margin-top: 24px;
+    margin-top: 16px;
   }
   ${SimpleCtaButton} {
     text-transform: uppercase;
@@ -516,7 +561,7 @@ const WrapperDiv = styled.div`
       font-size: 18px;
     }
     ${Balance} {
-      margin-top: 24px;
+      margin-top: 16px;
     }
     ${SimpleCtaButton} {
       margin-top: 16px;
@@ -560,10 +605,12 @@ const StatusInfo = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  row-gap: 12px;
+  row-gap: 8px;
   background-color: rgba(255, 255, 255, 0.027);
-  margin-top: 24px;
-  padding: 16px;
+  margin-top: 16px;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: ${fontWeightSemiBold};
 `
 const WarningDiv = styled.div`
   display: flex;
@@ -608,14 +655,6 @@ const ActionDiv = styled.div`
   padding: 24px 18px;
   @media ${breakpoint.xl} {
     width: 45%;
-  }
-`
-
-const ResultDiv = styled.div`
-  display: flex;
-  justify-content: space-between;
-  span:last-child {
-    color: ${offWhite};
   }
 `
 
@@ -667,6 +706,7 @@ const ActionButton = styled(SimpleCtaButton)`
   height: 40px;
   @media ${breakpoint.xl} {
     height: 40px;
+    font-size: 16px;
   }
 `
 
@@ -674,7 +714,7 @@ const DetailsDiv = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 12px;
-  margin-top: 24px;
+  margin-top: 16px;
   padding: 16px 0;
   border-top: 1px solid ${darkGray}7a;
   border-bottom: 1px solid ${darkGray}7a;
@@ -690,7 +730,7 @@ const DetailDiv = styled.div`
     display: flex;
   }
   > span:last-child {
-    color: ${primary}a3;
+    color: ${offWhite};
   }
   ${TooltipMessage} {
     width: 280px;
