@@ -96,14 +96,25 @@ export const useLeverager = () => {
           totalDebtAfterTx: '0',
           healthFactorAfterTx: '0',
         }
-      const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
-        await leveragerLdot.getStatusAfterLeverageDotTransaction({
-          user: account,
-          token: param.asset,
-          borrow_dot_amount: param.borrowAmount.toString(),
-          repay_dot_amount: param.amount.toString(),
-        })
-      return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+      const {
+        totalCollateralAfterTx,
+        totalDebtAfterTx,
+        totalCollateralInDotAfterTx,
+        totalDebtInDotAfterTx,
+        healthFactorAfterTx,
+      } = await leveragerLdot.getStatusAfterLeverageDotTransaction({
+        user: account,
+        token: param.asset,
+        borrow_dot_amount: param.borrowAmount.toString(),
+        repay_dot_amount: param.amount.toString(),
+      })
+      return {
+        totalCollateralAfterTx,
+        totalDebtAfterTx,
+        totalCollateralInDotAfterTx,
+        totalDebtInDotAfterTx,
+        healthFactorAfterTx,
+      }
     },
     [account, leveragerLdot],
   )
@@ -119,14 +130,25 @@ export const useLeverager = () => {
           totalDebtAfterTx: '0',
           healthFactorAfterTx: '0',
         }
-      const { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx } =
-        await leveragerLdot.getStatusAfterLeverageDotFromPositionTransaction({
-          user: account,
-          token: param.asset,
-          borrow_dot_amount: param.borrowAmount.toString(),
-          supply_dot_amount: param.amount.toString(),
-        })
-      return { totalCollateralAfterTx, totalDebtAfterTx, healthFactorAfterTx }
+      const {
+        totalCollateralAfterTx,
+        totalDebtAfterTx,
+        totalCollateralInDotAfterTx,
+        totalDebtInDotAfterTx,
+        healthFactorAfterTx,
+      } = await leveragerLdot.getStatusAfterLeverageDotFromPositionTransaction({
+        user: account,
+        token: param.asset,
+        borrow_dot_amount: param.borrowAmount.toString(),
+        supply_dot_amount: param.amount.toString(),
+      })
+      return {
+        totalCollateralAfterTx,
+        totalDebtAfterTx,
+        totalCollateralInDotAfterTx,
+        totalDebtInDotAfterTx,
+        healthFactorAfterTx,
+      }
     },
     [account, leveragerLdot],
   )
