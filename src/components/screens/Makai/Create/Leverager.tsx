@@ -15,7 +15,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
 } from 'recharts'
 import { IconArrowBottom, IconArrowLeft } from 'src/assets/svgs'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
@@ -66,7 +66,13 @@ const TABS = ['leverage', 'mystats'] as const
 type TabType = typeof TABS[number]
 const ActionTab: TabFC = Tab
 
-const TABS_DATE_RANGE = ['onemonth', 'threemonth', 'oneyear'] as const
+const TABS_DATE_RANGE = [
+  'onemonth',
+  'threemonth',
+  'sixmonth',
+  'oneyear',
+  'max',
+] as const
 type TabDateRangeType = typeof TABS_DATE_RANGE[number]
 const ActionDateRangeTab: TabFC = TabDate
 
@@ -112,7 +118,6 @@ export const Leverager: FC<LeveragerProps> = ({
   const { switchChainIfUnsupported } = useSwitchChainIfUnsupported()
 
   const { apy } = useLdotApy()
-  const { exchangeRates } = useLdotExchangeRate()
   const { data: balances } = useWalletBalance()
   const { data: userData } = useUserData()
 
@@ -136,8 +141,10 @@ export const Leverager: FC<LeveragerProps> = ({
   const [isCloseLoading, setIsCloseLoading] = useState(false)
   const [isLeverageLoading, setIsLeverageLoading] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<TabType>('leverage')
-  const [activeDateRangeTab, setActiveDateRangeTab] = useState<TabDateRangeType>('onemonth')
+  const [activeTab, setActiveTab] = useState<TabType>('mystats')
+  const [activeDateRangeTab, setActiveDateRangeTab] =
+    useState<TabDateRangeType>('onemonth')
+  const { exchangeRates } = useLdotExchangeRate()
 
   const estimation = userData
     ? estimateLeverager({
@@ -320,14 +327,24 @@ export const Leverager: FC<LeveragerProps> = ({
   }, [currentPrice, liquidationPrice])
 
   const exchangeRatesCharts = useMemo(() => {
-    return exchangeRates.map((item) => {
+    const slicedExchangeRates =
+      activeDateRangeTab === 'onemonth'
+        ? exchangeRates.slice(-30)
+        : activeDateRangeTab === 'threemonth'
+          ? exchangeRates.slice(-100)
+          : activeDateRangeTab === 'sixmonth'
+            ? exchangeRates.slice(-180)
+            : activeDateRangeTab === 'oneyear'
+              ? exchangeRates.slice(-365)
+              : exchangeRates.slice()
+    return slicedExchangeRates.map((item) => {
       return {
         exchangeRate: Number(normalize(item.exchangeRate, 10)).toFixed(6),
         liquidationPrice: liquidationPrice.toFixed(6),
         timestamp: item.timestamp.split('T')[0],
       }
     })
-  }, [exchangeRates, liquidationPrice])
+  }, [activeDateRangeTab, exchangeRates, liquidationPrice])
 
   const CustomTooltip = ({
     active,
@@ -793,7 +810,9 @@ export const Leverager: FC<LeveragerProps> = ({
                   contents={{
                     onemonth: { label: t`1m` },
                     threemonth: { label: t`3m` },
+                    sixmonth: { label: t`6m` },
                     oneyear: { label: t`1y` },
+                    max: { label: t`max` },
                   }}
                   activeTab={activeDateRangeTab}
                   onChangeActiveTab={setActiveDateRangeTab}
@@ -1103,10 +1122,10 @@ const ActionTabDiv = styled.div`
   }
 `
 const ActionTabDateRangeDiv = styled.div`
-    display: flex;
-    flex-direction: row;
-    justify-content: end;
-    align-items: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: end;
+  align-items: center;
   ${TabDate} {
     width: 200px;
     margin-bottom: 24px;
