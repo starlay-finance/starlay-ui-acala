@@ -1,5 +1,6 @@
 import IconAlert from 'public/assets/svgs/icon_alert.svg'
 import IconArrowBottom from 'public/assets/svgs/icon_arrow-bottom.svg'
+import IconArrowLeft from 'public/assets/svgs/icon_arrow-left.svg'
 import IconArrowRight from 'public/assets/svgs/icon_arrow-right.svg'
 import IconClose from 'public/assets/svgs/icon_close.svg'
 import IconCloseAlt from 'public/assets/svgs/icon_close_alt.svg'
@@ -23,15 +24,16 @@ import LogoProtocol from 'public/assets/svgs/logo_protocol.svg'
 export {
   IconAlert,
   IconArrowBottom,
+  IconArrowLeft,
   IconArrowRight,
   IconClose,
   IconCloseAlt,
   IconDiscord,
   IconGithub,
   IconLoading,
-  IconMetamask,
-  IconMenu,
   IconMedium,
+  IconMenu,
+  IconMetamask,
   IconPolkadotJs,
   IconProtocol,
   IconSettings,

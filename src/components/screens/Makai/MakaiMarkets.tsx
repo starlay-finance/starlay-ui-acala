@@ -1,6 +1,10 @@
+import { useRouter } from 'next/router'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
-import { LEVERAGEABLE_ASSET_SYMBOLS, LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS } from 'src/constants/assets'
+import {
+  LEVERAGEABLE_ASSET_SYMBOLS,
+  LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS,
+} from 'src/constants/assets'
 import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
@@ -8,18 +12,15 @@ import { breakpoint } from 'src/styles/mixins'
 import { symbolSorter } from 'src/utils/market'
 import styled from 'styled-components'
 import { LeveragerCard } from './LeveragerCard'
-import { useLeverageModal } from './modals/LeverageModal'
 
 export const MakaiMarkets = asStyled(({ className }) => {
+  const router = useRouter()
   const { data: marketData } = useMarketData()
   const { data: userData } = useUserData()
   const { data: balances } = useWalletBalance()
   const { open: openWalletModal } = useWalletModal()
-  const { open: openLeveragerModal } = useLeverageModal()
 
-  const {
-    assets,
-  } = marketData || {}
+  const { assets } = marketData || {}
   const markets = (assets || [])
     .filter((each) => each.isActive)
     .filter((each) => LEVERAGEABLE_ASSET_SYMBOLS.includes(each.symbol))
@@ -28,34 +29,36 @@ export const MakaiMarkets = asStyled(({ className }) => {
   return (
     <MakaiMarketsSection className={className}>
       <Section className={className}>
-        {
-          markets.map((asset) => (
-            <LeveragerCard
-              key={asset.symbol}
-              icon={asset.icon}
-              borrowApy={asset.variableBorrowAPY}
-              collateralAsset={assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol])}
-              symbol={asset.symbol || asset.displaySymbol}
-              balance={balances[asset.symbol]}
-              onClick={userData
-                ? () =>
-                  openLeveragerModal({
-                    collateralAsset: assets?.find((each) => each.symbol === LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol]),
-                    asset,
-                    userAssetBalance: {
-                      ...userData.balanceByAsset[asset.symbol],
-                      inWallet: balances[asset.symbol],
-                    },
-                    isPosition: false
-                  })
-                : openWalletModal}
-            />
-          ))
-        }
-
-        <EmptyDiv />
-        <EmptyDiv />
-        <EmptyDiv />
+        {markets.map((asset) => (
+          <LeveragerCard
+            key={asset.symbol}
+            icon={asset.icon}
+            borrowApy={asset.variableBorrowAPY}
+            collateralAsset={assets?.find(
+              (each) =>
+                each.symbol ===
+                LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol],
+            )}
+            symbol={asset.symbol || asset.displaySymbol}
+            balance={balances[asset.symbol]}
+            onClick={
+              userData
+                ? (e: any) => {
+                  e.preventDefault()
+                  router.push(
+                    `/app/evm/makai/create?asset=${asset.symbol
+                    }&collateralAsset=${assets?.find(
+                      (each) =>
+                        each.symbol ===
+                        LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol],
+                    )?.symbol
+                    }`,
+                  )
+                }
+                : openWalletModal
+            }
+          />
+        ))}
       </Section>
     </MakaiMarketsSection>
   )
@@ -64,16 +67,9 @@ export const MakaiMarkets = asStyled(({ className }) => {
 const MakaiMarketsSection = styled.section``
 
 const Section = styled.section`
-  display: flex;
-  flex-direction: column;
-  column-gap: 24px;
-  > * {
-    flex: 1;
-  }
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
   @media ${breakpoint.xl} {
-    flex-direction: row;
-
+    grid-template-columns: repeat(4, 1fr);
   }
 `
-
-const EmptyDiv = styled.div``

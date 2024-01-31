@@ -12,6 +12,16 @@ const query = gql`
     }
   }
 `
+const queryForExchangeRate = gql`
+  query dailySummaries {
+    dailySummaries(last: 100, orderBy: TIMESTAMP_ASC) {
+      nodes {
+        exchangeRate
+        timestamp
+      }
+    }
+  }
+`
 
 export const useLdotApy = () => {
   const { data, isLoading } = useSWR<{
@@ -40,4 +50,27 @@ export const useLdotApy = () => {
   // you can also calculate apy
   const apy = apr + (Number(first.exchangeRate) / Number(last.exchangeRate) - 1)
   return { apy, isLoading }
+}
+
+export const useLdotExchangeRate = () => {
+  const { data, isLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRate', () =>
+    request(GRAPH_API_ACALA_LIQUID_STAKING, queryForExchangeRate),
+  )
+
+  if (isLoading || !data)
+    return {
+      exchangeRates: [],
+      isLoading,
+    }
+
+  const exchangeRates = data.dailySummaries.nodes
+
+  return { exchangeRates, isLoading }
 }
