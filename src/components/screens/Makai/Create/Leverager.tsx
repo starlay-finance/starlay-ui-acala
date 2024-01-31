@@ -12,6 +12,7 @@ import {
   Area,
   ComposedChart,
   Legend,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -19,9 +20,7 @@ import {
 } from 'recharts'
 import { IconArrowBottom, IconArrowLeft } from 'src/assets/svgs'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
-import {
-  ShimmerPlaceholder,
-} from 'src/components/parts/Loading'
+import { ShimmerPlaceholder } from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
@@ -50,7 +49,7 @@ import {
   BN_ZERO,
   formatAmt,
   formatUSD,
-  formattedToBigNumber
+  formattedToBigNumber,
 } from 'src/utils/number'
 import { APP, MAKAI } from 'src/utils/routes'
 import styled, { css } from 'styled-components'
@@ -206,13 +205,20 @@ export const Leverager: FC<LeveragerProps> = ({
 
   const statsApy = useMemo(() => {
     const statsApy =
-      (1 / (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber())) *
+      (1 /
+        (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber())) *
       (apy -
         (asset?.variableBorrowAPY || BN_ZERO).toNumber() +
         (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
       100
     return statsApy
-  }, [apy, asset?.variableBorrowAPY, collateralAsset?.depositAPY, totalBorrowedInAsset, totalStakedInAsset])
+  }, [
+    apy,
+    asset?.variableBorrowAPY,
+    collateralAsset?.depositAPY,
+    totalBorrowedInAsset,
+    totalStakedInAsset,
+  ])
 
   const yieldInCollateral = useMemo(() => {
     const yieldInCollateral = (totalStakedInCollateral.toNumber() * apy) / 12
@@ -339,10 +345,21 @@ export const Leverager: FC<LeveragerProps> = ({
 
   const liquidationStatsPrice = useMemo(() => {
     if (!exchangeRateDOT2LDOT) return 0
-    const leverageStats = (1 / (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber()))
-    const liquidationStatsPrice = ((leverageStats - 1) / (leverageStats * normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18).toNumber())) * 10000 / Number(liquidationThreshold)
+    const leverageStats =
+      1 / (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber())
+    const liquidationStatsPrice =
+      (((leverageStats - 1) /
+        (leverageStats *
+          normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18).toNumber())) *
+        10000) /
+      Number(liquidationThreshold)
     return liquidationStatsPrice
-  }, [exchangeRateDOT2LDOT, liquidationThreshold, totalBorrowedInAsset, totalStakedInAsset])
+  }, [
+    exchangeRateDOT2LDOT,
+    liquidationThreshold,
+    totalBorrowedInAsset,
+    totalStakedInAsset,
+  ])
 
   const currentPrice = useMemo(() => {
     if (!exchangeRateLDOT2DOT) return 0
@@ -354,7 +371,31 @@ export const Leverager: FC<LeveragerProps> = ({
     return ((1 - liquidationPrice / currentPrice) * 100).toFixed(2)
   }, [currentPrice, liquidationPrice])
 
-  const exchangeRatesCharts = useMemo(() => {
+  const exchangeRatesLeverage = useMemo(() => {
+    const slicedExchangeRates =
+      activeDateRangeTab === 'onemonth'
+        ? exchangeRates.slice(-30)
+        : activeDateRangeTab === 'threemonth'
+          ? exchangeRates.slice(-100)
+          : activeDateRangeTab === 'sixmonth'
+            ? exchangeRates.slice(-180)
+            : activeDateRangeTab === 'oneyear'
+              ? exchangeRates.slice(-365)
+              : exchangeRates.slice()
+    return slicedExchangeRates.map((item) => {
+      return {
+        exchangeRate: Number(normalize(item.exchangeRate, 10)).toFixed(6),
+        liquidationPrice: liquidationPrice.toFixed(6),
+        offPeg: (
+          (1 - liquidationPrice / Number(normalize(item.exchangeRate, 10))) *
+          100
+        ).toFixed(2),
+        timestamp: item.timestamp.split('T')[0],
+      }
+    })
+  }, [activeDateRangeTab, exchangeRates, liquidationPrice])
+
+  const exchangeRatesStats = useMemo(() => {
     const slicedExchangeRates =
       activeDateRangeTab === 'onemonth'
         ? exchangeRates.slice(-30)
@@ -369,6 +410,10 @@ export const Leverager: FC<LeveragerProps> = ({
       return {
         exchangeRate: Number(normalize(item.exchangeRate, 10)).toFixed(6),
         liquidationPrice: liquidationStatsPrice.toFixed(6),
+        offPeg: (
+          (1 - liquidationStatsPrice / Number(normalize(item.exchangeRate, 10))) *
+          100
+        ).toFixed(2),
         timestamp: item.timestamp.split('T')[0],
       }
     })
@@ -385,38 +430,101 @@ export const Leverager: FC<LeveragerProps> = ({
   }) => {
     if (active && payload && payload.length) {
       return (
-        <TooltipDiv className="custom-tooltip">
-          <DateInfo className="label">{`Date : ${label}`}</DateInfo>
-          <ExchangeRateInfo className="intro">{`Exchange Rate : ${payload[0].value}`}</ExchangeRateInfo>
-          <LiquidationPriceInfo className="intro">{`Liquidation Price : ${payload[1].value}`}</LiquidationPriceInfo>
+        <TooltipDiv>
+          <DateInfo>{`Date : ${label}`}</DateInfo>
+          <ExchangeRateInfo>{`Exchange Rate : ${payload[0].value}`}</ExchangeRateInfo>
+          <LiquidationPriceInfo>{`Liquidation Price : ${payload[1].value}`}</LiquidationPriceInfo>
+          <OffPegInfo>{`Off-peg % to liquidation: ${payload[0].payload.offPeg}%`}</OffPegInfo>
         </TooltipDiv>
       )
     }
 
     return null
   }
-  const renderLineChart = (
-    <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={exchangeRatesCharts}>
+  const CustomTooltipLeverage = ({
+    active,
+    payload,
+    label,
+  }: {
+    active: any
+    payload: any
+    label: any
+  }) => {
+    if (active && payload && payload.length) {
+      return (
+        <TooltipDiv>
+          <DateInfo>{`Date : ${label}`}</DateInfo>
+          <ExchangeRateInfo>{`Exchange Rate : ${payload[0].value}`}</ExchangeRateInfo>
+          <LiquidationPriceInfo>{`Liquidation Price : ${payload[1].value}`}</LiquidationPriceInfo>
+          <OffPegInfo>{`Off-peg % to liquidation: ${payload[0].payload.offPeg}%`}</OffPegInfo>
+        </TooltipDiv>
+      )
+    }
+
+    return null
+  }
+  const renderLeverageGraph = (
+    <ResponsiveContainer width="100%" height={200}>
+      <ComposedChart data={exchangeRatesLeverage}>
         <defs>
           <linearGradient id="colorExchangeRate" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
           </linearGradient>
         </defs>
         <Area
+          type="stepAfter"
           name="LDOT Exchange Rate"
           dataKey="exchangeRate"
           stroke="#82ca9d"
           fillOpacity={1}
           fill="url(#colorExchangeRate)"
         />
-        <Area
+        <Line
+          type="stepAfter"
           name="Liquidation Price"
           dataKey="liquidationPrice"
           stroke="#a02d1e"
-          fillOpacity={0}
-          fill="#a02d1e"
+          dot={false}
+        />
+        <XAxis dataKey="timestamp" />
+        <YAxis type="number" domain={['auto', 'auto']} />
+        <Tooltip
+          content={
+            <CustomTooltipLeverage
+              active={undefined}
+              payload={undefined}
+              label={undefined}
+            />
+          }
+        />
+        <Legend />
+      </ComposedChart>
+    </ResponsiveContainer>
+  )
+  const renderStatsGraph = (
+    <ResponsiveContainer width="100%" height={300}>
+      <ComposedChart data={exchangeRatesStats}>
+        <defs>
+          <linearGradient id="colorExchangeRate" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0.1} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="stepAfter"
+          name="LDOT Exchange Rate"
+          dataKey="exchangeRate"
+          stroke="#82ca9d"
+          fillOpacity={1}
+          fill="url(#colorExchangeRate)"
+        />
+        <Line
+          type="stepAfter"
+          name="Liquidation Price"
+          dataKey="liquidationPrice"
+          stroke="#a02d1e"
+          dot={false}
         />
         <XAxis dataKey="timestamp" />
         <YAxis type="number" domain={['auto', 'auto']} />
@@ -523,6 +631,23 @@ export const Leverager: FC<LeveragerProps> = ({
                     .toFixed(2)} DOT`}</p>
                 </FlowDescription>
               </FlowInfo>
+              <LeverageChartDiv>
+                <ActionTabDateRangeDiv>
+                  <ActionDateRangeTab
+                    tabs={TABS_DATE_RANGE}
+                    contents={{
+                      onemonth: { label: t`1m` },
+                      threemonth: { label: t`3m` },
+                      sixmonth: { label: t`6m` },
+                      oneyear: { label: t`1y` },
+                      max: { label: t`max` },
+                    }}
+                    activeTab={activeDateRangeTab}
+                    onChangeActiveTab={setActiveDateRangeTab}
+                  />
+                </ActionTabDateRangeDiv>
+                {renderLeverageGraph}
+              </LeverageChartDiv>
             </InfoDiv>
             <ActionDiv>
               <AssetDropDownDiv>
@@ -788,49 +913,45 @@ export const Leverager: FC<LeveragerProps> = ({
                     <DetailInfo>
                       <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
+                        {exchangeRateLDOT2DOT &&
                           formatAmt(totalStakedInCollateral, {
                             symbol: collateralAsset?.symbol,
                             shorteningThreshold: 6,
-                          })
-                        )}
+                          })}
                       </DetailInfoContent>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
+                        {exchangeRateLDOT2DOT &&
                           `≈ ${formatAmt(totalStakedInAsset, {
                             symbol: asset.symbol,
                             shorteningThreshold: 6,
-                          })}`
-                        )}
+                          })}`}
                       </DetailInfoContent>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
-                          `≈US ${formatUSD(totalStakedPriceInAsset)}`
-                        )}
+                        {exchangeRateLDOT2DOT &&
+                          `≈US ${formatUSD(totalStakedPriceInAsset)}`}
                       </DetailInfoContent>
                     </DetailInfo>
                     <DetailInfo>
                       <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
+                        {exchangeRateLDOT2DOT &&
                           formatAmt(valueToBigNumber(yieldInCollateral), {
                             symbol: collateralAsset?.symbol,
                             shorteningThreshold: 6,
-                          })
-                        )}
+                          })}
                       </DetailInfoContent>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
+                        {exchangeRateLDOT2DOT &&
                           `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
                             symbol: asset.symbol,
                             shorteningThreshold: 6,
-                          })}`
-                        )}
+                          })}`}
                       </DetailInfoContent>
                       <DetailInfoContent>
-                        {exchangeRateLDOT2DOT && (
-                          `≈US ${formatUSD(valueToBigNumber(yieldPriceInAsset))}`
-                        )}
+                        {exchangeRateLDOT2DOT &&
+                          `≈US ${formatUSD(
+                            valueToBigNumber(yieldPriceInAsset),
+                          )}`}
                       </DetailInfoContent>
                     </DetailInfo>
                     <DetailInfo>
@@ -864,7 +985,7 @@ export const Leverager: FC<LeveragerProps> = ({
                   onChangeActiveTab={setActiveDateRangeTab}
                 />
               </ActionTabDateRangeDiv>
-              {renderLineChart}
+              {renderStatsGraph}
             </ChartDiv>
           </>
         )}
@@ -1193,11 +1314,20 @@ const ChartDiv = styled.div`
   margin: 24px 0px;
   padding: 24px 24px 24px 0px;
 `
+const LeverageChartDiv = styled.div`
+  background-color: #0f0f0f;
+  border-radius: 8px;
+  margin: 24px 0px;
+  padding: 12px 12px 12px 0px;
+`
 const ExchangeRateInfo = styled.p`
   color: #82ca9d;
 `
 const LiquidationPriceInfo = styled.p`
   color: #a02d1e;
+`
+const OffPegInfo = styled.p`
+  color: #758BFD;
 `
 const DateInfo = styled.p`
   margin-bottom: 8px;
