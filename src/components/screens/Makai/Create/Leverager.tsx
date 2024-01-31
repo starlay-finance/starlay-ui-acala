@@ -50,7 +50,7 @@ import {
   BN_ZERO,
   formatAmt,
   formatUSD,
-  formattedToBigNumber,
+  formattedToBigNumber
 } from 'src/utils/number'
 import { APP, MAKAI } from 'src/utils/routes'
 import styled, { css } from 'styled-components'
@@ -180,6 +180,12 @@ export const Leverager: FC<LeveragerProps> = ({
     return totalStakedInCollateral
   }, [userData?.balanceByAsset, collateralAsset?.symbol])
 
+  const totalBorrowedInAsset = useMemo(() => {
+    const totalStakedInCollateral =
+      userData?.balanceByAsset[asset?.symbol].borrowed || BN_ZERO
+    return totalStakedInCollateral
+  }, [userData?.balanceByAsset, asset?.symbol])
+
   const totalStakedInAsset = useMemo(() => {
     const totalStakedInAsset = (
       userData?.balanceByAsset[collateralAsset?.symbol].deposited || BN_ZERO
@@ -197,6 +203,16 @@ export const Leverager: FC<LeveragerProps> = ({
     marketReferenceCurrencyPriceInUSD,
     totalStakedInAsset,
   ])
+
+  const statsApy = useMemo(() => {
+    const statsApy =
+      (1 / (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber())) *
+      (apy -
+        (asset?.variableBorrowAPY || BN_ZERO).toNumber() +
+        (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
+      100
+    return statsApy
+  }, [apy, asset?.variableBorrowAPY, collateralAsset?.depositAPY, totalBorrowedInAsset, totalStakedInAsset])
 
   const yieldInCollateral = useMemo(() => {
     const yieldInCollateral = (totalStakedInCollateral.toNumber() * apy) / 12
@@ -772,10 +788,10 @@ export const Leverager: FC<LeveragerProps> = ({
                   </DetailInfoContent>
                   <DetailInfoContent>
                     {exchangeRateLDOT2DOT && (
-                      formatAmt(totalStakedInAsset, {
+                      `≈ ${formatAmt(totalStakedInAsset, {
                         symbol: asset.symbol,
                         shorteningThreshold: 6,
-                      })
+                      })}`
                     )}
                   </DetailInfoContent>
                   <DetailInfoContent>
@@ -796,10 +812,10 @@ export const Leverager: FC<LeveragerProps> = ({
                   </DetailInfoContent>
                   <DetailInfoContent>
                     {exchangeRateLDOT2DOT && (
-                      formatAmt(valueToBigNumber(yieldInAsset), {
+                      `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
                         symbol: asset.symbol,
                         shorteningThreshold: 6,
-                      })
+                      })}`
                     )}
                   </DetailInfoContent>
                   <DetailInfoContent>
@@ -812,9 +828,9 @@ export const Leverager: FC<LeveragerProps> = ({
                   <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
                   <DetailInfoContent>
                     ≈{' '}
-                    {formatAmt(valueToBigNumber(apy * 100), {
+                    {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
                       symbol: '%',
-                      shorteningThreshold: 6,
+                      decimalPlaces: 2,
                     })}
                   </DetailInfoContent>
                 </DetailInfo>
