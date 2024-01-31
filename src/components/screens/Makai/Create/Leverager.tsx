@@ -337,6 +337,13 @@ export const Leverager: FC<LeveragerProps> = ({
     )
   }, [exchangeRateDOT2LDOT, leverage, liquidationThreshold])
 
+  const liquidationStatsPrice = useMemo(() => {
+    if (!exchangeRateDOT2LDOT) return 0
+    const leverageStats = (1 / (1 - totalBorrowedInAsset.toNumber() / totalStakedInAsset.toNumber()))
+    const liquidationStatsPrice = ((leverageStats - 1) / (leverageStats * normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18).toNumber())) * 10000 / Number(liquidationThreshold)
+    return liquidationStatsPrice
+  }, [exchangeRateDOT2LDOT, liquidationThreshold, totalBorrowedInAsset, totalStakedInAsset])
+
   const currentPrice = useMemo(() => {
     if (!exchangeRateLDOT2DOT) return 0
     return normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18).toNumber()
@@ -361,11 +368,11 @@ export const Leverager: FC<LeveragerProps> = ({
     return slicedExchangeRates.map((item) => {
       return {
         exchangeRate: Number(normalize(item.exchangeRate, 10)).toFixed(6),
-        liquidationPrice: liquidationPrice.toFixed(6),
+        liquidationPrice: liquidationStatsPrice.toFixed(6),
         timestamp: item.timestamp.split('T')[0],
       }
     })
-  }, [activeDateRangeTab, exchangeRates, liquidationPrice])
+  }, [activeDateRangeTab, exchangeRates, liquidationStatsPrice])
 
   const CustomTooltip = ({
     active,
