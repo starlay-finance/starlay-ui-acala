@@ -58,12 +58,17 @@ import {
   Balance,
   Control,
   Tab,
+  TabDate,
   TabFC,
 } from '../../Dashboard/modals/parts'
 
 const TABS = ['leverage', 'mystats'] as const
 type TabType = typeof TABS[number]
 const ActionTab: TabFC = Tab
+
+const TABS_DATE_RANGE = ['onemonth', 'threemonth', 'oneyear'] as const
+type TabDateRangeType = typeof TABS_DATE_RANGE[number]
+const ActionDateRangeTab: TabFC = TabDate
 
 export type LeveragerProps = {
   asset: AssetMarketData
@@ -131,7 +136,8 @@ export const Leverager: FC<LeveragerProps> = ({
   const [isCloseLoading, setIsCloseLoading] = useState(false)
   const [isLeverageLoading, setIsLeverageLoading] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<TabType>('mystats')
+  const [activeTab, setActiveTab] = useState<TabType>('leverage')
+  const [activeDateRangeTab, setActiveDateRangeTab] = useState<TabDateRangeType>('onemonth')
 
   const estimation = userData
     ? estimateLeverager({
@@ -346,10 +352,7 @@ export const Leverager: FC<LeveragerProps> = ({
   }
   const renderLineChart = (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart
-        data={exchangeRatesCharts}
-        margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-      >
+      <ComposedChart data={exchangeRatesCharts}>
         <defs>
           <linearGradient id="colorExchangeRate" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
@@ -783,7 +786,21 @@ export const Leverager: FC<LeveragerProps> = ({
                 </DetailInfo>
               </InfoSection>
             </StatusSection>
-            <ChartDiv>{renderLineChart}</ChartDiv>
+            <ChartDiv>
+              <ActionTabDateRangeDiv>
+                <ActionDateRangeTab
+                  tabs={TABS_DATE_RANGE}
+                  contents={{
+                    onemonth: { label: t`1m` },
+                    threemonth: { label: t`3m` },
+                    oneyear: { label: t`1y` },
+                  }}
+                  activeTab={activeDateRangeTab}
+                  onChangeActiveTab={setActiveDateRangeTab}
+                />
+              </ActionTabDateRangeDiv>
+              {renderLineChart}
+            </ChartDiv>
           </>
         )}
       </PageDiv>
@@ -1085,9 +1102,25 @@ const ActionTabDiv = styled.div`
     }
   }
 `
+const ActionTabDateRangeDiv = styled.div`
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+  ${TabDate} {
+    width: 200px;
+    margin-bottom: 24px;
+    background-color: #272727;
+    padding: 4px;
+    border-radius: 4px;
+  }
+`
 
 const ChartDiv = styled.div`
+  background-color: #0f0f0f;
+  border-radius: 8px;
   margin: 24px 0px;
+  padding: 24px 24px 24px 0px;
 `
 const ExchangeRateInfo = styled.p`
   color: #82ca9d;

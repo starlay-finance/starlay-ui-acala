@@ -1,4 +1,6 @@
 export * from './AmountInput'
 export * from './Balance'
-export * from './styles'
 export * from './Tab'
+export * from './TabDate'
+export * from './styles'
+
