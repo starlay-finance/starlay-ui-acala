@@ -776,64 +776,70 @@ export const Leverager: FC<LeveragerProps> = ({
             <StatusSection>
               {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
               <InfoSection>
-                <DetailInfo>
-                  <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      formatAmt(totalStakedInCollateral, {
-                        symbol: collateralAsset?.symbol,
-                        shorteningThreshold: 6,
-                      })
-                    )}
-                  </DetailInfoContent>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      `≈ ${formatAmt(totalStakedInAsset, {
-                        symbol: asset.symbol,
-                        shorteningThreshold: 6,
-                      })}`
-                    )}
-                  </DetailInfoContent>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      `≈US ${formatUSD(totalStakedPriceInAsset)}`
-                    )}
-                  </DetailInfoContent>
-                </DetailInfo>
-                <DetailInfo>
-                  <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      formatAmt(valueToBigNumber(yieldInCollateral), {
-                        symbol: collateralAsset?.symbol,
-                        shorteningThreshold: 6,
-                      })
-                    )}
-                  </DetailInfoContent>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
-                        symbol: asset.symbol,
-                        shorteningThreshold: 6,
-                      })}`
-                    )}
-                  </DetailInfoContent>
-                  <DetailInfoContent>
-                    {exchangeRateLDOT2DOT && (
-                      `≈US ${formatUSD(valueToBigNumber(yieldPriceInAsset))}`
-                    )}
-                  </DetailInfoContent>
-                </DetailInfo>
-                <DetailInfo>
-                  <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
-                  <DetailInfoContent>
-                    ≈{' '}
-                    {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
-                      symbol: '%',
-                      decimalPlaces: 2,
-                    })}
-                  </DetailInfoContent>
-                </DetailInfo>
+                {totalBorrowedInAsset.toNumber() ? (
+                  <>
+                    <DetailInfo>
+                      <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          formatAmt(totalStakedInCollateral, {
+                            symbol: collateralAsset?.symbol,
+                            shorteningThreshold: 6,
+                          })
+                        )}
+                      </DetailInfoContent>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          `≈ ${formatAmt(totalStakedInAsset, {
+                            symbol: asset.symbol,
+                            shorteningThreshold: 6,
+                          })}`
+                        )}
+                      </DetailInfoContent>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          `≈US ${formatUSD(totalStakedPriceInAsset)}`
+                        )}
+                      </DetailInfoContent>
+                    </DetailInfo>
+                    <DetailInfo>
+                      <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          formatAmt(valueToBigNumber(yieldInCollateral), {
+                            symbol: collateralAsset?.symbol,
+                            shorteningThreshold: 6,
+                          })
+                        )}
+                      </DetailInfoContent>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
+                            symbol: asset.symbol,
+                            shorteningThreshold: 6,
+                          })}`
+                        )}
+                      </DetailInfoContent>
+                      <DetailInfoContent>
+                        {exchangeRateLDOT2DOT && (
+                          `≈US ${formatUSD(valueToBigNumber(yieldPriceInAsset))}`
+                        )}
+                      </DetailInfoContent>
+                    </DetailInfo>
+                    <DetailInfo>
+                      <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
+                      <DetailInfoContent>
+                        ≈{' '}
+                        {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
+                          symbol: '%',
+                          decimalPlaces: 2,
+                        })}
+                      </DetailInfoContent>
+                    </DetailInfo>
+                  </>
+                ) : (
+                  <WarningInfo>No Leveraged Tokens</WarningInfo>
+                )}
               </InfoSection>
             </StatusSection>
             <ChartDiv>
@@ -1119,6 +1125,12 @@ const DetailInfoTitle = styled.p`
   font-weight: ${fontWeightSemiBold};
   padding-bottom: 12px;
 `
+
+const WarningInfo = styled.p`
+  font-size: 20px;
+  font-weight: ${fontWeightSemiBold};
+`
+
 const DetailInfoContent = styled.p`
   font-size: 16px;
   font-weight: ${fontWeightSemiBold};
