@@ -19,7 +19,9 @@ import {
 } from 'recharts'
 import { IconArrowBottom, IconArrowLeft } from 'src/assets/svgs'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
-import { ShimmerPlaceholder } from 'src/components/parts/Loading'
+import {
+  ShimmerPlaceholder,
+} from 'src/components/parts/Loading'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
@@ -141,7 +143,7 @@ export const Leverager: FC<LeveragerProps> = ({
   const [isCloseLoading, setIsCloseLoading] = useState(false)
   const [isLeverageLoading, setIsLeverageLoading] = useState(false)
 
-  const [activeTab, setActiveTab] = useState<TabType>('mystats')
+  const [activeTab, setActiveTab] = useState<TabType>('leverage')
   const [activeDateRangeTab, setActiveDateRangeTab] =
     useState<TabDateRangeType>('onemonth')
   const { exchangeRates } = useLdotExchangeRate()
@@ -186,12 +188,15 @@ export const Leverager: FC<LeveragerProps> = ({
   }, [userData?.balanceByAsset, collateralAsset?.symbol, exchangeRateLDOT2DOT])
 
   const totalStakedPriceInAsset = useMemo(() => {
-    const totalStakedPriceInAsset =
-      asset?.priceInMarketReferenceCurrency.multipliedBy(
-        marketReferenceCurrencyPriceInUSD,
-      )
+    const totalStakedPriceInAsset = totalStakedInAsset
+      .multipliedBy(asset?.priceInMarketReferenceCurrency)
+      .multipliedBy(marketReferenceCurrencyPriceInUSD)
     return totalStakedPriceInAsset
-  }, [asset?.priceInMarketReferenceCurrency, marketReferenceCurrencyPriceInUSD])
+  }, [
+    asset?.priceInMarketReferenceCurrency,
+    marketReferenceCurrencyPriceInUSD,
+    totalStakedInAsset,
+  ])
 
   const yieldInCollateral = useMemo(() => {
     const yieldInCollateral = (totalStakedInCollateral.toNumber() * apy) / 12
@@ -753,42 +758,54 @@ export const Leverager: FC<LeveragerProps> = ({
         ) : (
           <>
             <StatusSection>
-              <StatusTitle>{t`My Stats`}</StatusTitle>
+              {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
               <InfoSection>
                 <DetailInfo>
                   <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
                   <DetailInfoContent>
-                    {formatAmt(totalStakedInCollateral, {
-                      symbol: collateralAsset?.symbol,
-                      shorteningThreshold: 6,
-                    })}
+                    {exchangeRateLDOT2DOT && (
+                      formatAmt(totalStakedInCollateral, {
+                        symbol: collateralAsset?.symbol,
+                        shorteningThreshold: 6,
+                      })
+                    )}
                   </DetailInfoContent>
                   <DetailInfoContent>
-                    {formatAmt(totalStakedInAsset, {
-                      symbol: asset.symbol,
-                      shorteningThreshold: 6,
-                    })}
+                    {exchangeRateLDOT2DOT && (
+                      formatAmt(totalStakedInAsset, {
+                        symbol: asset.symbol,
+                        shorteningThreshold: 6,
+                      })
+                    )}
                   </DetailInfoContent>
                   <DetailInfoContent>
-                    ≈US {formatUSD(totalStakedPriceInAsset)}
+                    {exchangeRateLDOT2DOT && (
+                      `≈US ${formatUSD(totalStakedPriceInAsset)}`
+                    )}
                   </DetailInfoContent>
                 </DetailInfo>
                 <DetailInfo>
                   <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
                   <DetailInfoContent>
-                    {formatAmt(valueToBigNumber(yieldInCollateral), {
-                      symbol: collateralAsset?.symbol,
-                      shorteningThreshold: 6,
-                    })}
+                    {exchangeRateLDOT2DOT && (
+                      formatAmt(valueToBigNumber(yieldInCollateral), {
+                        symbol: collateralAsset?.symbol,
+                        shorteningThreshold: 6,
+                      })
+                    )}
                   </DetailInfoContent>
                   <DetailInfoContent>
-                    {formatAmt(valueToBigNumber(yieldInAsset), {
-                      symbol: asset.symbol,
-                      shorteningThreshold: 6,
-                    })}
+                    {exchangeRateLDOT2DOT && (
+                      formatAmt(valueToBigNumber(yieldInAsset), {
+                        symbol: asset.symbol,
+                        shorteningThreshold: 6,
+                      })
+                    )}
                   </DetailInfoContent>
                   <DetailInfoContent>
-                    ≈US {formatUSD(valueToBigNumber(yieldPriceInAsset))}
+                    {exchangeRateLDOT2DOT && (
+                      `≈US ${formatUSD(valueToBigNumber(yieldPriceInAsset))}`
+                    )}
                   </DetailInfoContent>
                 </DetailInfo>
                 <DetailInfo>
