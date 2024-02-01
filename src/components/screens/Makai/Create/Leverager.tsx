@@ -468,6 +468,24 @@ export const Leverager: FC<LeveragerProps> = ({
 
     return null
   }
+  const renderCustomXAxisTick = ({ x, y, payload }: {
+    x: any;
+    y: any;
+    payload: any;
+  }) => {
+    return (
+      <text x={x} y={y + 12} fill="#666" textAnchor='middle' fontSize={12}>{payload.value}</text>
+    );
+  };
+  const renderCustomYAxisTick = ({ x, y, payload }: {
+    x: any;
+    y: any;
+    payload: any;
+  }) => {
+    return (
+      <text x={x} y={y + 4} textAnchor="end" fill="#666" fontSize={12}>{payload.value}</text>
+    );
+  };
   const renderLeverageGraph = (
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={exchangeRatesLeverage}>
@@ -492,8 +510,8 @@ export const Leverager: FC<LeveragerProps> = ({
           stroke="#a02d1e"
           dot={false}
         />
-        <XAxis dataKey="timestamp" />
-        <YAxis type="number" domain={['auto', 'auto']} />
+        <XAxis dataKey="timestamp" tick={renderCustomXAxisTick} />
+        <YAxis type="number" domain={['auto', 'auto']} tick={renderCustomYAxisTick} />
         <Tooltip
           content={
             <CustomTooltipLeverage
@@ -531,8 +549,8 @@ export const Leverager: FC<LeveragerProps> = ({
           stroke="#a02d1e"
           dot={false}
         />
-        <XAxis dataKey="timestamp" />
-        <YAxis type="number" domain={['auto', 'auto']} />
+        <XAxis dataKey="timestamp" tick={renderCustomXAxisTick} />
+        <YAxis type="number" domain={['auto', 'auto']} tick={renderCustomYAxisTick} />
         <Tooltip
           content={
             <CustomTooltip
