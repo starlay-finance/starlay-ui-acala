@@ -13,6 +13,17 @@ const query = gql`
   }
 `
 
+const queryForExchangeRate = gql`
+  query dailySummaries($offset: Int!) {
+    dailySummaries(offset: $offset, orderBy: TIMESTAMP_ASC) {
+      nodes {
+        exchangeRate
+        timestamp
+      }
+    }
+  }
+`
+
 export const useLdotApy = () => {
   const { data, isLoading } = useSWR<{
     dailySummaries: {
@@ -40,4 +51,149 @@ export const useLdotApy = () => {
   // you can also calculate apy
   const apy = apr + (Number(first.exchangeRate) / Number(last.exchangeRate) - 1)
   return { apy, isLoading }
+}
+
+export const useLdotExchangeRate = () => {
+  const { data: firstData, isLoading: isFirstDataLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRateFirst', () =>
+    request(
+      GRAPH_API_ACALA_LIQUID_STAKING,
+      gql`
+        query dailySummaries {
+          dailySummaries(offset: 0, orderBy: TIMESTAMP_ASC) {
+            nodes {
+              exchangeRate
+              timestamp
+            }
+          }
+        }
+      `,
+    ),
+  )
+  const { data: secondData, isLoading: isSecondDataLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRateSecond', () =>
+    request(
+      GRAPH_API_ACALA_LIQUID_STAKING,
+      gql`
+        query dailySummaries {
+          dailySummaries(offset: 100, orderBy: TIMESTAMP_ASC) {
+            nodes {
+              exchangeRate
+              timestamp
+            }
+          }
+        }
+      `,
+    ),
+  )
+  const { data: thirdData, isLoading: isThirdDataLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRateThird', () =>
+    request(
+      GRAPH_API_ACALA_LIQUID_STAKING,
+      gql`
+        query dailySummaries {
+          dailySummaries(offset: 200, orderBy: TIMESTAMP_ASC) {
+            nodes {
+              exchangeRate
+              timestamp
+            }
+          }
+        }
+      `,
+    ),
+  )
+  const { data: forthData, isLoading: isForthLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRateForth', () =>
+    request(
+      GRAPH_API_ACALA_LIQUID_STAKING,
+      gql`
+        query dailySummaries {
+          dailySummaries(offset: 300, orderBy: TIMESTAMP_ASC) {
+            nodes {
+              exchangeRate
+              timestamp
+            }
+          }
+        }
+      `,
+    ),
+  )
+  const { data: fifthData, isLoading: isFifthLoading } = useSWR<{
+    dailySummaries: {
+      nodes: {
+        exchangeRate: string
+        timestamp: string
+      }[]
+    }
+  }>('ldotExchangeRateFifth', () =>
+    request(
+      GRAPH_API_ACALA_LIQUID_STAKING,
+      gql`
+        query dailySummaries {
+          dailySummaries(offset: 400, orderBy: TIMESTAMP_ASC) {
+            nodes {
+              exchangeRate
+              timestamp
+            }
+          }
+        }
+      `,
+    ),
+  )
+
+  if (
+    isFirstDataLoading ||
+    isSecondDataLoading ||
+    isThirdDataLoading ||
+    isForthLoading ||
+    isFifthLoading ||
+    !firstData ||
+    !secondData ||
+    !thirdData ||
+    !forthData ||
+    !fifthData
+  )
+    return {
+      exchangeRates: [],
+      isLoading: true,
+    }
+
+  const exchangeRates = firstData.dailySummaries.nodes
+    .concat(secondData.dailySummaries.nodes)
+    .concat(thirdData.dailySummaries.nodes)
+    .concat(forthData.dailySummaries.nodes)
+    .concat(fifthData.dailySummaries.nodes)
+
+  const isLoading =
+    isFirstDataLoading ||
+    isSecondDataLoading ||
+    isThirdDataLoading ||
+    isForthLoading ||
+    isFifthLoading
+
+  return { exchangeRates, isLoading }
 }
