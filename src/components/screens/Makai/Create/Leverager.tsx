@@ -21,9 +21,11 @@ import {
 import { IconArrowBottom, IconArrowLeft } from 'src/assets/svgs'
 import { SimpleCtaButton } from 'src/components/parts/Cta'
 import { ShimmerPlaceholder } from 'src/components/parts/Loading'
+import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
 import { AssetLabel } from 'src/components/parts/Modal/parts'
 import { RatioSliderControl } from 'src/components/parts/Modal/parts/RatioControl'
 import { TooltipMessage } from 'src/components/parts/ToolTip'
+import { useEVMWallet } from 'src/hooks/useEVMWallet'
 import { useLdotApy, useLdotExchangeRate } from 'src/hooks/useLdotApy'
 import { useSwitchChainIfUnsupported } from 'src/hooks/useUnsupportedChainAlert'
 import { useUserData } from 'src/hooks/useUserData'
@@ -117,6 +119,8 @@ export const Leverager: FC<LeveragerProps> = ({
 }) => {
   const router = useRouter()
   const { switchChainIfUnsupported } = useSwitchChainIfUnsupported()
+  const { open: openWalletModal } = useWalletModal()
+  const { account } = useEVMWallet()
 
   const { apy } = useLdotApy()
   const { data: balances } = useWalletBalance()
@@ -411,7 +415,8 @@ export const Leverager: FC<LeveragerProps> = ({
         exchangeRate: Number(normalize(item.exchangeRate, 10)).toFixed(6),
         liquidationPrice: liquidationStatsPrice.toFixed(6),
         offPeg: (
-          (1 - liquidationStatsPrice / Number(normalize(item.exchangeRate, 10))) *
+          (1 -
+            liquidationStatsPrice / Number(normalize(item.exchangeRate, 10))) *
           100
         ).toFixed(2),
         timestamp: item.timestamp.split('T')[0],
@@ -857,47 +862,57 @@ export const Leverager: FC<LeveragerProps> = ({
                 )}
               <ActionButton
                 onClick={
-                  isPosition
-                    ? debounce(
-                      switchChainIfUnsupported(async () => {
-                        setIsLeverageLoading(true)
-                        await startLeveragerDotFromPosition(
-                          formattedToBigNumber(supplyAmount) || BN_ZERO,
-                          leverage,
-                        )
-                        setIsLeverageLoading(false)
-                      }),
-                      2000,
-                      { immediate: true },
-                    )
-                    : debounce(
-                      switchChainIfUnsupported(async () => {
-                        setIsLeverageLoading(true)
-                        await startLeverager(
-                          formattedToBigNumber(supplyAmount) || BN_ZERO,
-                          leverage,
-                        )
-                        setIsLeverageLoading(false)
-                      }),
-                      2000,
-                      { immediate: true },
-                    )
+                  account
+                    ? isPosition
+                      ? debounce(
+                        switchChainIfUnsupported(async () => {
+                          setIsLeverageLoading(true)
+                          await startLeveragerDotFromPosition(
+                            formattedToBigNumber(supplyAmount) || BN_ZERO,
+                            leverage,
+                          )
+                          setIsLeverageLoading(false)
+                        }),
+                        2000,
+                        { immediate: true },
+                      )
+                      : debounce(
+                        switchChainIfUnsupported(async () => {
+                          setIsLeverageLoading(true)
+                          await startLeverager(
+                            formattedToBigNumber(supplyAmount) || BN_ZERO,
+                            leverage,
+                          )
+                          setIsLeverageLoading(false)
+                        }),
+                        2000,
+                        { immediate: true },
+                      )
+                    : () => {
+                      openWalletModal()
+                    }
                 }
                 disabled={!!estimation.unavailableReason || isLeverageLoading}
               >
                 {estimation.unavailableReason || t`Start leverager`}
               </ActionButton>
               <ActionButton
-                disabled={isCloseLoading}
-                onClick={debounce(
-                  switchChainIfUnsupported(async () => {
-                    setIsCloseLoading(true)
-                    await closeLeverageDOT()
-                    setIsCloseLoading(false)
-                  }),
-                  2000,
-                  { immediate: true },
-                )}
+                disabled={isCloseLoading || !totalBorrowedInAsset.toNumber()}
+                onClick={
+                  account
+                    ? debounce(
+                      switchChainIfUnsupported(async () => {
+                        setIsCloseLoading(true)
+                        await closeLeverageDOT()
+                        setIsCloseLoading(false)
+                      }),
+                      2000,
+                      { immediate: true },
+                    )
+                    : () => {
+                      openWalletModal()
+                    }
+                }
               >
                 {t`Close Leverager`}
               </ActionButton>
@@ -905,88 +920,97 @@ export const Leverager: FC<LeveragerProps> = ({
           </WrapperDiv>
         ) : (
           <>
-            <StatusSection>
-              {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
-              <InfoSection>
-                {totalBorrowedInAsset.toNumber() ? (
-                  <>
-                    <DetailInfo>
-                      <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          formatAmt(totalStakedInCollateral, {
-                            symbol: collateralAsset?.symbol,
-                            shorteningThreshold: 6,
-                          })}
-                      </DetailInfoContent>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          `≈ ${formatAmt(totalStakedInAsset, {
-                            symbol: asset.symbol,
-                            shorteningThreshold: 6,
-                          })}`}
-                      </DetailInfoContent>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          `≈US ${formatUSD(totalStakedPriceInAsset)}`}
-                      </DetailInfoContent>
-                    </DetailInfo>
-                    <DetailInfo>
-                      <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          formatAmt(valueToBigNumber(yieldInCollateral), {
-                            symbol: collateralAsset?.symbol,
-                            shorteningThreshold: 6,
-                          })}
-                      </DetailInfoContent>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
-                            symbol: asset.symbol,
-                            shorteningThreshold: 6,
-                          })}`}
-                      </DetailInfoContent>
-                      <DetailInfoContent>
-                        {exchangeRateLDOT2DOT &&
-                          `≈US ${formatUSD(
-                            valueToBigNumber(yieldPriceInAsset),
-                          )}`}
-                      </DetailInfoContent>
-                    </DetailInfo>
-                    <DetailInfo>
-                      <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
-                      <DetailInfoContent>
-                        ≈{' '}
-                        {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
-                          symbol: '%',
-                          decimalPlaces: 2,
-                        })}
-                      </DetailInfoContent>
-                    </DetailInfo>
-                  </>
-                ) : (
-                  <WarningInfo>No Leveraged Tokens</WarningInfo>
-                )}
-              </InfoSection>
-            </StatusSection>
-            <ChartDiv>
-              <ActionTabDateRangeDiv>
-                <ActionDateRangeTab
-                  tabs={TABS_DATE_RANGE}
-                  contents={{
-                    onemonth: { label: t`1m` },
-                    threemonth: { label: t`3m` },
-                    sixmonth: { label: t`6m` },
-                    oneyear: { label: t`1y` },
-                    max: { label: t`max` },
-                  }}
-                  activeTab={activeDateRangeTab}
-                  onChangeActiveTab={setActiveDateRangeTab}
-                />
-              </ActionTabDateRangeDiv>
-              {renderStatsGraph}
-            </ChartDiv>
+            {
+              totalBorrowedInAsset.toNumber() ? (
+                <>
+                  <StatusSection>
+                    {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
+                    <InfoSection>
+                      <>
+                        <DetailInfo>
+                          <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              formatAmt(totalStakedInCollateral, {
+                                symbol: collateralAsset?.symbol,
+                                shorteningThreshold: 6,
+                              })}
+                          </DetailInfoContent>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              `≈ ${formatAmt(totalStakedInAsset, {
+                                symbol: asset.symbol,
+                                shorteningThreshold: 6,
+                              })}`}
+                          </DetailInfoContent>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              `≈US ${formatUSD(totalStakedPriceInAsset)}`}
+                          </DetailInfoContent>
+                        </DetailInfo>
+                        <DetailInfo>
+                          <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              formatAmt(valueToBigNumber(yieldInCollateral), {
+                                symbol: collateralAsset?.symbol,
+                                shorteningThreshold: 6,
+                              })}
+                          </DetailInfoContent>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
+                                symbol: asset.symbol,
+                                shorteningThreshold: 6,
+                              })}`}
+                          </DetailInfoContent>
+                          <DetailInfoContent>
+                            {exchangeRateLDOT2DOT &&
+                              `≈US ${formatUSD(
+                                valueToBigNumber(yieldPriceInAsset),
+                              )}`}
+                          </DetailInfoContent>
+                        </DetailInfo>
+                        <DetailInfo>
+                          <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
+                          <DetailInfoContent>
+                            ≈{' '}
+                            {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
+                              symbol: '%',
+                              decimalPlaces: 2,
+                            })}
+                          </DetailInfoContent>
+                        </DetailInfo>
+                      </>
+                    </InfoSection>
+                  </StatusSection>
+                  <ChartDiv>
+                    <ActionTabDateRangeDiv>
+                      <ActionDateRangeTab
+                        tabs={TABS_DATE_RANGE}
+                        contents={{
+                          onemonth: { label: t`1m` },
+                          threemonth: { label: t`3m` },
+                          sixmonth: { label: t`6m` },
+                          oneyear: { label: t`1y` },
+                          max: { label: t`max` },
+                        }}
+                        activeTab={activeDateRangeTab}
+                        onChangeActiveTab={setActiveDateRangeTab}
+                      />
+                    </ActionTabDateRangeDiv>
+                    {renderStatsGraph}
+                  </ChartDiv>
+                </>
+              ) : (
+                <StatusSection>
+                  <InfoSection>
+                    <WarningInfo>No Leveraged Tokens</WarningInfo>
+                  </InfoSection>
+                </StatusSection>
+
+              )
+            }
           </>
         )}
       </PageDiv>
@@ -1327,7 +1351,7 @@ const LiquidationPriceInfo = styled.p`
   color: #a02d1e;
 `
 const OffPegInfo = styled.p`
-  color: #758BFD;
+  color: #758bfd;
 `
 const DateInfo = styled.p`
   margin-bottom: 8px;
