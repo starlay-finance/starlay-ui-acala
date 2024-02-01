@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import { useCallback } from 'react'
 import { asStyled } from 'src/components/hoc/asStyled'
 import { useWalletModal } from 'src/components/parts/Modal/WalletModal'
 import {
@@ -9,6 +10,7 @@ import { useMarketData } from 'src/hooks/useMarketData'
 import { useUserData } from 'src/hooks/useUserData'
 import { useWalletBalance } from 'src/hooks/useWalletBalance'
 import { breakpoint } from 'src/styles/mixins'
+import { AssetSymbol } from 'src/types/models'
 import { symbolSorter } from 'src/utils/market'
 import styled from 'styled-components'
 import { LeveragerCard } from './LeveragerCard'
@@ -26,20 +28,22 @@ export const MakaiMarkets = asStyled(({ className }) => {
     .filter((each) => LEVERAGEABLE_ASSET_SYMBOLS.includes(each.symbol))
     .sort(symbolSorter)
 
+  const collateralAsset = useCallback((symbol: AssetSymbol) => {
+    return assets?.find(
+      (each) =>
+        each.symbol ===
+        LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[symbol],
+    )
+  }, [assets])
+
   return (
     <MakaiMarketsSection className={className}>
       <Section className={className}>
         {markets.map((asset) => (
           <LeveragerCard
             key={asset.symbol}
-            icon={asset.icon}
-            borrowApy={asset.variableBorrowAPY}
-            collateralAsset={assets?.find(
-              (each) =>
-                each.symbol ===
-                LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol],
-            )}
-            symbol={asset.symbol || asset.displaySymbol}
+            asset={asset}
+            collateralAsset={collateralAsset(asset.symbol)}
             balance={balances[asset.symbol]}
             onClick={
               userData
@@ -47,11 +51,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
                   e.preventDefault()
                   router.push(
                     `/app/evm/makai/create?asset=${asset.symbol
-                    }&collateralAsset=${assets?.find(
-                      (each) =>
-                        each.symbol ===
-                        LEVERAGEABLE_COLLATERAL_ASSET_SYMBOLS[asset.symbol],
-                    )?.symbol
+                    }&collateralAsset=${collateralAsset(asset.symbol)?.symbol
                     }`,
                   )
                 }
