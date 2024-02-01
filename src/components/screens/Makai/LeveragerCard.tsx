@@ -16,9 +16,7 @@ import styled from 'styled-components'
 
 type CardProps = {
   collateralAsset?: AssetMarketData | undefined
-  icon: StaticImageData
-  borrowApy: BigNumber
-  symbol: AssetSymbol
+  asset: AssetMarketData
   balance: BigNumber
   onClick: VoidFunction
 }
@@ -26,27 +24,24 @@ type CardProps = {
 export const LeveragerCard = asStyled<CardProps>(
   ({
     collateralAsset,
-    icon,
-    borrowApy,
+    asset,
     balance,
-    symbol,
     onClick,
     className,
   }) => {
     const { getLTV } = useLeverager()
-    const [maxLeverage, setMaxLeverage] =
-      useState<number | undefined>(undefined)
+    const [maxLeverage, setMaxLeverage] = useState<number>(0)
     const { apy } = useLdotApy()
 
     const maxApy = useMemo(() => {
       const maxApy =
-        (maxLeverage || 0) *
+        (maxLeverage) *
         (apy -
-          borrowApy.toNumber() +
+          asset.variableBorrowAPY.toNumber() +
           (collateralAsset?.depositAPY || BN_ZERO).toNumber()) *
         100
       return maxApy
-    }, [apy, borrowApy, maxLeverage, collateralAsset])
+    }, [maxLeverage, apy, asset.variableBorrowAPY, collateralAsset?.depositAPY])
 
     useEffect(() => {
       const fetchLtv = async () => {
@@ -64,27 +59,27 @@ export const LeveragerCard = asStyled<CardProps>(
 
     return (
       <LeveragerCardComponent
-        icon={icon}
-        symbol={symbol}
+        icon={asset.icon}
+        symbol={asset.symbol}
         collateralSymbol={collateralAsset?.symbol!}
         collateralIcon={collateralAsset?.icon!}
         className={className}
         maxApy={{
           label: t`Max APY:`,
-          value: formatAmt(valueToBigNumber(maxApy) || BN_ZERO, {
+          value: maxApy ? formatAmt(valueToBigNumber(maxApy) || BN_ZERO, {
             symbol: '%',
             decimalPlaces: 2,
-          }),
+          }) : "-",
           tooltip: t`Estimated APY at maximum available leverage`,
         }}
         details={[
           {
             label: t`Wallet Balance`,
-            value: formatAmt(balance || BN_ZERO, { symbol, decimalPlaces: 2 }),
+            value: formatAmt(balance || BN_ZERO, { symbol: asset.symbol, decimalPlaces: 2 }),
           },
           {
             label: t`Position`,
-            value: `${collateralAsset?.symbol}/${symbol}`,
+            value: `${collateralAsset?.symbol}/${asset.symbol}`,
             tooltip: t`Combination of assets used (collateral/debt)`,
           },
           {
@@ -97,7 +92,7 @@ export const LeveragerCard = asStyled<CardProps>(
           {
             label: t`Create`,
             onClick: onClick,
-          }
+          },
         ]}
       />
     )
