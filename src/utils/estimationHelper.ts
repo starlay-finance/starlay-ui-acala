@@ -36,7 +36,6 @@ export type EstimationParam = {
 
 export type LeveragerEstimationParam = {
   amount: BigNumber | undefined
-  asset: AssetMarketData
   userAssetBalance: UserAssetBalance
   isPosition: boolean
 }
