@@ -169,12 +169,57 @@ export const Leverager: FC<LeveragerProps> = ({
     useState<TabDateRangeType>('onemonth')
   const { exchangeRates } = useLdotExchangeRate()
 
+  const borrowedAmount = useMemo(() => {
+    if (!supplyAmount) return "0"
+    return isCollateral ?
+      (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage.minus(valueToBigNumber(1)))
+        .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+        .toNumber()
+        .toFixed(2)
+      :
+      (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage)
+        .toNumber()
+        .toFixed(2)
+  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
+
+  const wrappedBorrowedAmount = useMemo(() => {
+    if (!supplyAmount) return 0
+    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage)
+      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18))
+      .toNumber()
+      .toFixed(2)
+  }, [exchangeRateDOT2LDOT, leverage, supplyAmount])
+
+  const wrappedCollateralBorrowedAmount = useMemo(() => {
+    if (!supplyAmount) return 0
+    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage.minus(valueToBigNumber(1)))
+      .toNumber()
+      .toFixed(2)
+  }, [leverage, supplyAmount])
+
+  const borrowedAmountFromLending = useMemo(() => {
+    if (!supplyAmount) return 0
+    return isCollateral ? (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage.minus(valueToBigNumber(1)))
+      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+      .toNumber()
+      .toFixed(2) : (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage.minus(valueToBigNumber(1)))
+        .toNumber()
+        .toFixed(2)
+  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
+
   const estimation = useMemo(() => {
     if (!userData) return {
       unavailableReason: undefined,
       maxAmount: balances[asset.symbol],
     }
     const estimation = estimateLeverager({
+      borrowedAmount,
       amount: formattedToBigNumber(supplyAmount),
       userAssetBalance: {
         ...userData.balanceByAsset[
@@ -187,7 +232,7 @@ export const Leverager: FC<LeveragerProps> = ({
       isPosition,
     })
     return estimation
-  }, [userData, balances, asset.symbol, supplyAmount, isCollateral, collateralAsset.symbol, leverage, isPosition])
+  }, [userData, balances, asset.symbol, borrowedAmount, supplyAmount, isCollateral, collateralAsset.symbol, leverage, isPosition])
 
   const netApy = useMemo(() => {
     const netApy =
@@ -422,50 +467,6 @@ export const Leverager: FC<LeveragerProps> = ({
     if (currentPrice === 0) return 0
     return ((1 - liquidationPrice / currentPrice) * 100).toFixed(2)
   }, [currentPrice, liquidationPrice])
-
-  const borrowedAmount = useMemo(() => {
-    if (!supplyAmount) return 0
-    return isCollateral ?
-      (formattedToBigNumber(supplyAmount) || BN_ZERO)
-        .multipliedBy(leverage.minus(valueToBigNumber(1)))
-        .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
-        .toNumber()
-        .toFixed(2)
-      :
-      (formattedToBigNumber(supplyAmount) || BN_ZERO)
-        .multipliedBy(leverage)
-        .toNumber()
-        .toFixed(2)
-  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
-
-  const wrappedBorrowedAmount = useMemo(() => {
-    if (!supplyAmount) return 0
-    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
-      .multipliedBy(leverage)
-      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18))
-      .toNumber()
-      .toFixed(2)
-  }, [exchangeRateDOT2LDOT, leverage, supplyAmount])
-
-  const wrappedCollateralBorrowedAmount = useMemo(() => {
-    if (!supplyAmount) return 0
-    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
-      .multipliedBy(leverage.minus(valueToBigNumber(1)))
-      .toNumber()
-      .toFixed(2)
-  }, [leverage, supplyAmount])
-
-  const borrowedAmountFromLending = useMemo(() => {
-    if (!supplyAmount) return 0
-    return isCollateral ? (formattedToBigNumber(supplyAmount) || BN_ZERO)
-      .multipliedBy(leverage.minus(valueToBigNumber(1)))
-      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
-      .toNumber()
-      .toFixed(2) : (formattedToBigNumber(supplyAmount) || BN_ZERO)
-        .multipliedBy(leverage.minus(valueToBigNumber(1)))
-        .toNumber()
-        .toFixed(2)
-  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
 
   const exchangeRatesLeverage = useMemo(() => {
     const slicedExchangeRates =

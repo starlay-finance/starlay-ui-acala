@@ -354,12 +354,14 @@ type LeveragerEstimationResult = {
 }
 
 export const estimateLeverager = ({
+  borrowedAmount,
   amount,
   userAssetBalance,
   leverage,
   isPosition,
 }: LeveragerEstimationParam & {
   leverage: BigNumber
+  borrowedAmount: string
 }): LeveragerEstimationResult => {
   const { inWallet, deposited } = userAssetBalance
   const maxAmount = isPosition ? deposited : inWallet
@@ -371,6 +373,11 @@ export const estimateLeverager = ({
   if (!leverage || leverage.isNaN() || leverage.eq(BN_ONE))
     return {
       unavailableReason: t`Enter leverage`,
+      maxAmount,
+    }
+  if (Number(borrowedAmount) < 1)
+    return {
+      unavailableReason: t`Minimum flash borrow amount is 1`,
       maxAmount,
     }
   return {
