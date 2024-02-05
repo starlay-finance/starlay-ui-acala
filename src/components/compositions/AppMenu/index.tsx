@@ -21,8 +21,10 @@ import { gray } from 'src/styles/colors'
 import { BN_ZERO, formatAmt, formatUSD } from 'src/utils/number'
 import {
   APP_ROOT,
+  LEVERAGE,
   MARKETS,
   byNetwork,
+  evmOnly,
   matchPath
 } from 'src/utils/routes'
 import styled from 'styled-components'
@@ -61,9 +63,9 @@ const MenuItems: FC<{ showClaim: VoidFunction }> = ({ showClaim }) => {
       >{t`Markets`}</Link>
       <Link href="https://apps.acala.network/swap">{t`Swap`}</Link>
 
-      {/* <Link
-        href={matchPath(pathname, MAKAI) ? '' : evmOnly(MAKAI, network)}
-      >{t`Makai`}</Link>
+      <Link
+        href={matchPath(pathname, LEVERAGE) ? '' : evmOnly(LEVERAGE, network)}
+      >{t`Leveraged Staking`}</Link>
       {/* <Link href="">{t`LAY/veLAY`}</Link>
       <button onClick={showClaim} disabled={!account || network !== 'EVM'}>
         Claim LAY

@@ -12,6 +12,7 @@ import { useWalletBalance } from 'src/hooks/useWalletBalance'
 import { breakpoint } from 'src/styles/mixins'
 import { AssetSymbol } from 'src/types/models'
 import { symbolSorter } from 'src/utils/market'
+import { LEVERAGE } from 'src/utils/routes'
 import styled from 'styled-components'
 import { LeveragerCard } from './LeveragerCard'
 
@@ -50,7 +51,7 @@ export const MakaiMarkets = asStyled(({ className }) => {
                 ? (e: any) => {
                   e.preventDefault()
                   router.push(
-                    `/app/evm/makai/create?asset=${asset.symbol
+                    `/app/evm/${LEVERAGE}/create?asset=${asset.symbol
                     }&collateralAsset=${collateralAsset(asset.symbol)?.symbol
                     }`,
                   )

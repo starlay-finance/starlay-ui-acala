@@ -53,7 +53,7 @@ import {
   formatUSD,
   formattedToBigNumber,
 } from 'src/utils/number'
-import { APP, MAKAI } from 'src/utils/routes'
+import { APP, LEVERAGE } from 'src/utils/routes'
 import styled, { css } from 'styled-components'
 import {
   Action,
@@ -679,7 +679,7 @@ export const Leverager: FC<LeveragerProps> = ({
   )
   const handleBack = (e: any) => {
     e.preventDefault()
-    router.push(APP + MAKAI)
+    router.push(APP + LEVERAGE)
   }
   if (asset === undefined) return <></>
   return (

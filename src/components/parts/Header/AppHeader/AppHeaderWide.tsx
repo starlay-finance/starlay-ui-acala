@@ -17,7 +17,7 @@ import { shortenAddress } from 'src/utils/address'
 import {
   APP,
   APP_ROOT,
-  MAKAI,
+  LEVERAGE,
   MARKETS,
   byNetwork,
   evmOnly,
@@ -79,8 +79,8 @@ export const AppHeaderWide = styled(({ className }) => {
         <Tab $active={matchPath(pathname, MARKETS)}>
           <Link href={byNetwork(MARKETS, network)}>{t`Markets`}</Link>
         </Tab>
-        <Tab $active={matchPath(pathname, MAKAI)}>
-          <Link href={evmOnly(MAKAI, network)}>{t`Makai`}</Link>
+        <Tab $active={matchPath(pathname, LEVERAGE)}>
+          <Link href={evmOnly(LEVERAGE, network)}>{t`Leveraged Staking`}</Link>
         </Tab>
         {/* <Tab $active={matchPath(pathname, LAY_VELAY)}>
           <Link href={evmOnly(LAY_VELAY, network)}>{t`LAY/veLAY`}</Link>
