@@ -53,7 +53,7 @@ import {
   formatUSD,
   formattedToBigNumber,
 } from 'src/utils/number'
-import { APP, MAKAI } from 'src/utils/routes'
+import { APP, LEVERAGE } from 'src/utils/routes'
 import styled, { css } from 'styled-components'
 import {
   Action,
@@ -83,8 +83,13 @@ export type LeveragerProps = {
   asset: AssetMarketData
   collateralAsset: AssetMarketData
   marketReferenceCurrencyPriceInUSD: BigNumber
-  startLeverager: (amount: BigNumber, leverage: BigNumber) => Promise<any>
-  startLeveragerDotFromPosition: (
+  leverageDot: (amount: BigNumber, leverage: BigNumber) => Promise<any>
+  leverageDotFromPosition: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
+  leverageLdot: (amount: BigNumber, leverage: BigNumber) => Promise<any>
+  leverageLdotFromPosition: (
     amount: BigNumber,
     leverage: BigNumber,
   ) => Promise<any>
@@ -94,6 +99,14 @@ export type LeveragerProps = {
     leverage: BigNumber,
   ) => Promise<any>
   getStatusAfterLeverageDotFromPositionTransaction: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
+  getStatusAfterLeverageLdotTransaction: (
+    amount: BigNumber,
+    leverage: BigNumber,
+  ) => Promise<any>
+  getStatusAfterLeverageLdotFromPositionTransaction: (
     amount: BigNumber,
     leverage: BigNumber,
   ) => Promise<any>
@@ -107,11 +120,15 @@ export const Leverager: FC<LeveragerProps> = ({
   asset,
   collateralAsset,
   marketReferenceCurrencyPriceInUSD,
-  startLeverager,
-  startLeveragerDotFromPosition,
+  leverageDot,
+  leverageDotFromPosition,
+  leverageLdot,
+  leverageLdotFromPosition,
   closeLeverageDOT,
   getStatusAfterLeverageDotTransaction,
   getStatusAfterLeverageDotFromPositionTransaction,
+  getStatusAfterLeverageLdotTransaction,
+  getStatusAfterLeverageLdotFromPositionTransaction,
   getLTV,
   getLt,
   getExchangeRateLDOT2DOT,
@@ -128,6 +145,7 @@ export const Leverager: FC<LeveragerProps> = ({
 
   const [isAssetDropDownOpen, setIsAssetDropDownOpen] = useState(false)
   const [isPosition, setIsPosition] = useState(false)
+  const [isCollateral, setIsCollateral] = useState(false)
   const assetDropDownContainerRef = useRef(null)
 
   const [supplyAmount, setSupplyAmount] = useState('')
@@ -151,21 +169,70 @@ export const Leverager: FC<LeveragerProps> = ({
     useState<TabDateRangeType>('onemonth')
   const { exchangeRates } = useLdotExchangeRate()
 
-  const estimation = userData
-    ? estimateLeverager({
+  const borrowedAmount = useMemo(() => {
+    if (!supplyAmount) return "0"
+    return isCollateral ?
+      (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage.minus(valueToBigNumber(1)))
+        .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+        .toNumber()
+        .toFixed(2)
+      :
+      (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage)
+        .toNumber()
+        .toFixed(2)
+  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
+
+  const wrappedBorrowedAmount = useMemo(() => {
+    if (!supplyAmount) return 0
+    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage)
+      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18))
+      .toNumber()
+      .toFixed(2)
+  }, [exchangeRateDOT2LDOT, leverage, supplyAmount])
+
+  const wrappedCollateralBorrowedAmount = useMemo(() => {
+    if (!supplyAmount) return 0
+    return (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage.minus(valueToBigNumber(1)))
+      .toNumber()
+      .toFixed(2)
+  }, [leverage, supplyAmount])
+
+  const borrowedAmountFromLending = useMemo(() => {
+    if (!supplyAmount) return 0
+    return isCollateral ? (formattedToBigNumber(supplyAmount) || BN_ZERO)
+      .multipliedBy(leverage.minus(valueToBigNumber(1)))
+      .multipliedBy(normalizeBN(valueToBigNumber(exchangeRateLDOT2DOT), 18))
+      .toNumber()
+      .toFixed(2) : (formattedToBigNumber(supplyAmount) || BN_ZERO)
+        .multipliedBy(leverage.minus(valueToBigNumber(1)))
+        .toNumber()
+        .toFixed(2)
+  }, [exchangeRateLDOT2DOT, isCollateral, leverage, supplyAmount])
+
+  const estimation = useMemo(() => {
+    if (!userData) return {
+      unavailableReason: undefined,
+      maxAmount: balances[asset.symbol],
+    }
+    const estimation = estimateLeverager({
+      borrowedAmount,
       amount: formattedToBigNumber(supplyAmount),
-      asset,
       userAssetBalance: {
-        ...userData.balanceByAsset[collateralAsset.symbol],
-        inWallet: balances[asset.symbol],
+        ...userData.balanceByAsset[
+        isCollateral ? collateralAsset.symbol : asset.symbol
+        ],
+        inWallet:
+          balances[isCollateral ? collateralAsset.symbol : asset.symbol],
       },
       leverage,
       isPosition,
     })
-    : {
-      unavailableReason: t`Enter amount`,
-      maxAmount: balances[asset.symbol],
-    }
+    return estimation
+  }, [userData, balances, asset.symbol, borrowedAmount, supplyAmount, isCollateral, collateralAsset.symbol, leverage, isPosition])
 
   const netApy = useMemo(() => {
     const netApy =
@@ -286,20 +353,30 @@ export const Leverager: FC<LeveragerProps> = ({
     const fetchData = async () => {
       try {
         if (isPosition) {
-          const result = await getStatusAfterLeverageDotFromPositionTransaction(
-            formattedToBigNumber(supplyAmount) || BN_ZERO,
-            leverage,
-          )
+          const result = isCollateral
+            ? await getStatusAfterLeverageLdotFromPositionTransaction(
+              formattedToBigNumber(supplyAmount) || BN_ZERO,
+              leverage,
+            )
+            : await getStatusAfterLeverageDotFromPositionTransaction(
+              formattedToBigNumber(supplyAmount) || BN_ZERO,
+              leverage,
+            )
           setTotalCollateralAfterTx(result.totalCollateralAfterTx)
           setTotalDebtAfterTx(result.totalDebtAfterTx)
           setTotalCollateralInDotAfterTx(result.totalCollateralInDotAfterTx)
           setTotalDebtInDotAfterTx(result.totalDebtInDotAfterTx)
           setHealthFactorAfterTx(result.healthFactorAfterTx)
         } else {
-          const result = await getStatusAfterLeverageDotTransaction(
-            formattedToBigNumber(supplyAmount) || BN_ZERO,
-            leverage,
-          )
+          const result = isCollateral
+            ? await getStatusAfterLeverageLdotTransaction(
+              formattedToBigNumber(supplyAmount) || BN_ZERO,
+              leverage,
+            )
+            : await getStatusAfterLeverageDotTransaction(
+              formattedToBigNumber(supplyAmount) || BN_ZERO,
+              leverage,
+            )
           setTotalCollateralAfterTx(result.totalCollateralAfterTx)
           setTotalDebtAfterTx(result.totalDebtAfterTx)
           setTotalCollateralInDotAfterTx(result.totalCollateralInDotAfterTx)
@@ -315,18 +392,34 @@ export const Leverager: FC<LeveragerProps> = ({
     estimation.unavailableReason,
     getStatusAfterLeverageDotFromPositionTransaction,
     getStatusAfterLeverageDotTransaction,
+    getStatusAfterLeverageLdotFromPositionTransaction,
+    getStatusAfterLeverageLdotTransaction,
+    isCollateral,
     isPosition,
     leverage,
     supplyAmount,
   ])
 
   const handleDotClick = () => {
-    setIsAssetDropDownOpen(false)
     setIsPosition(false)
+    setIsCollateral(false)
+    setIsAssetDropDownOpen(false)
   }
 
   const handleDotPositionClick = () => {
     setIsPosition(true)
+    setIsCollateral(false)
+    setIsAssetDropDownOpen(false)
+  }
+  const handleLdotClick = () => {
+    setIsPosition(false)
+    setIsCollateral(true)
+    setIsAssetDropDownOpen(false)
+  }
+
+  const handleLdotPositionClick = () => {
+    setIsPosition(true)
+    setIsCollateral(true)
     setIsAssetDropDownOpen(false)
   }
 
@@ -468,24 +561,36 @@ export const Leverager: FC<LeveragerProps> = ({
 
     return null
   }
-  const renderCustomXAxisTick = ({ x, y, payload }: {
-    x: any;
-    y: any;
-    payload: any;
+  const renderCustomXAxisTick = ({
+    x,
+    y,
+    payload,
+  }: {
+    x: any
+    y: any
+    payload: any
   }) => {
     return (
-      <text x={x} y={y + 12} fill="#666" textAnchor='middle' fontSize={12}>{payload.value}</text>
-    );
-  };
-  const renderCustomYAxisTick = ({ x, y, payload }: {
-    x: any;
-    y: any;
-    payload: any;
+      <text x={x} y={y + 12} fill="#666" textAnchor="middle" fontSize={12}>
+        {payload.value}
+      </text>
+    )
+  }
+  const renderCustomYAxisTick = ({
+    x,
+    y,
+    payload,
+  }: {
+    x: any
+    y: any
+    payload: any
   }) => {
     return (
-      <text x={x} y={y + 4} textAnchor="end" fill="#666" fontSize={12}>{payload.value}</text>
-    );
-  };
+      <text x={x} y={y + 4} textAnchor="end" fill="#666" fontSize={12}>
+        {payload.value}
+      </text>
+    )
+  }
   const renderLeverageGraph = (
     <ResponsiveContainer width="100%" height={200}>
       <ComposedChart data={exchangeRatesLeverage}>
@@ -511,7 +616,11 @@ export const Leverager: FC<LeveragerProps> = ({
           dot={false}
         />
         <XAxis dataKey="timestamp" tick={renderCustomXAxisTick} />
-        <YAxis type="number" domain={['auto', 'auto']} tick={renderCustomYAxisTick} />
+        <YAxis
+          type="number"
+          domain={['auto', 'auto']}
+          tick={renderCustomYAxisTick}
+        />
         <Tooltip
           content={
             <CustomTooltipLeverage
@@ -550,7 +659,11 @@ export const Leverager: FC<LeveragerProps> = ({
           dot={false}
         />
         <XAxis dataKey="timestamp" tick={renderCustomXAxisTick} />
-        <YAxis type="number" domain={['auto', 'auto']} tick={renderCustomYAxisTick} />
+        <YAxis
+          type="number"
+          domain={['auto', 'auto']}
+          tick={renderCustomYAxisTick}
+        />
         <Tooltip
           content={
             <CustomTooltip
@@ -566,7 +679,7 @@ export const Leverager: FC<LeveragerProps> = ({
   )
   const handleBack = (e: any) => {
     e.preventDefault()
-    router.push(APP + MAKAI)
+    router.push(APP + LEVERAGE)
   }
   if (asset === undefined) return <></>
   return (
@@ -605,31 +718,21 @@ export const Leverager: FC<LeveragerProps> = ({
               </Description>
               <FlowInfo>
                 <FlowDescription>
-                  <p>{t`Flash borrow ${(
-                    formattedToBigNumber(supplyAmount) || BN_ZERO
-                  )
-                    .multipliedBy(leverage)
-                    .toNumber()
-                    .toFixed(2)} ${asset?.symbol} with flashloan`}</p>
+                  <p>{t`Flash borrow ${borrowedAmount} ${asset?.symbol} with flashloan`}</p>
                 </FlowDescription>
                 <FlowDescription>
-                  <p>{t`Wrap ${(formattedToBigNumber(supplyAmount) || BN_ZERO)
-                    .multipliedBy(leverage)
-                    .toNumber()
-                    .toFixed(2)} ${asset?.symbol} into ${(
-                      formattedToBigNumber(supplyAmount) || BN_ZERO
-                    )
-                      .multipliedBy(leverage)
-                      .multipliedBy(
-                        normalizeBN(valueToBigNumber(exchangeRateDOT2LDOT), 18),
-                      )
-                      .toNumber()
-                      .toFixed(2)} ${collateralAsset?.symbol}`}</p>
+                  <p>{t`Wrap ${borrowedAmount} ${asset?.symbol} into ${isCollateral ? wrappedCollateralBorrowedAmount : wrappedBorrowedAmount
+                    } ${collateralAsset?.symbol}`}</p>
                 </FlowDescription>
                 <FlowDescription>
-                  <p>{t`Deposit exchanged ${collateralAsset?.symbol} into lending pool`}</p>
+                  <p>{t`Deposit wrapped ${collateralAsset?.symbol} into lending pool`}</p>
                 </FlowDescription>
-                {isPosition && (
+                {isCollateral && !isPosition &&
+                  <FlowDescription>
+                    <p>{t`Deposit ${Number(supplyAmount).toFixed(2)} ${collateralAsset?.symbol} from wallet into lending pool`}</p>
+                  </FlowDescription>
+                }
+                {isPosition && !isCollateral && (
                   <FlowDescription>
                     <p>{t`Withdraw ${(
                       formattedToBigNumber(supplyAmount) || BN_ZERO
@@ -640,18 +743,10 @@ export const Leverager: FC<LeveragerProps> = ({
                 )}
 
                 <FlowDescription>
-                  <p>{t`Borrow ${(formattedToBigNumber(supplyAmount) || BN_ZERO)
-                    .multipliedBy(leverage.minus(valueToBigNumber(1)))
-                    .toNumber()
-                    .toFixed(2)} DOT from lending pool`}</p>
+                  <p>{t`Borrow ${borrowedAmountFromLending} ${asset?.symbol} from lending pool${isCollateral && isPosition ? " with collateral " + collateralAsset.symbol : ""}`}</p>
                 </FlowDescription>
                 <FlowDescription>
-                  <p>{t`Pay flashloan ${(
-                    formattedToBigNumber(supplyAmount) || BN_ZERO
-                  )
-                    .multipliedBy(leverage)
-                    .toNumber()
-                    .toFixed(2)} DOT`}</p>
+                  <p>{t`Pay flashloan ${borrowedAmount} ${asset?.symbol}`}</p>
                 </FlowDescription>
               </FlowInfo>
               <LeverageChartDiv>
@@ -680,9 +775,9 @@ export const Leverager: FC<LeveragerProps> = ({
                     onClick={() => setIsAssetDropDownOpen(!isAssetDropDownOpen)}
                   >
                     <AssetLabel
-                      asset={asset}
-                      label={`${asset?.symbol}${isPosition ? '(position)' : ''
-                        }`}
+                      asset={isCollateral ? collateralAsset : asset}
+                      label={`${isCollateral ? collateralAsset.symbol : asset?.symbol
+                        }${isPosition ? '(position)' : ''}`}
                     />
                     <IconArrowBottom />
                   </AssetDiv>
@@ -694,18 +789,38 @@ export const Leverager: FC<LeveragerProps> = ({
                   <DropDownDiv
                     as="div"
                     onClick={handleDotClick}
-                    $isActive={!isPosition}
+                    $isActive={!isPosition && !isCollateral}
                   >
                     <AssetLabel asset={asset} label={asset?.symbol} />
                   </DropDownDiv>
                   <DropDownDiv
                     as="div"
                     onClick={handleDotPositionClick}
-                    $isActive={isPosition}
+                    $isActive={isPosition && !isCollateral}
                   >
                     <AssetLabel
                       asset={asset}
                       label={`${asset?.symbol}(position)`}
+                    />
+                  </DropDownDiv>
+                  <DropDownDiv
+                    as="div"
+                    onClick={handleLdotClick}
+                    $isActive={!isPosition && isCollateral}
+                  >
+                    <AssetLabel
+                      asset={collateralAsset}
+                      label={collateralAsset?.symbol}
+                    />
+                  </DropDownDiv>
+                  <DropDownDiv
+                    as="div"
+                    onClick={handleLdotPositionClick}
+                    $isActive={isPosition && isCollateral}
+                  >
+                    <AssetLabel
+                      asset={collateralAsset}
+                      label={`${collateralAsset?.symbol}(position)`}
                     />
                   </DropDownDiv>
                 </AssetDropDown>
@@ -734,20 +849,26 @@ export const Leverager: FC<LeveragerProps> = ({
               )}
               {isPosition ? (
                 <Balance
-                  label={t`Deposited ${asset.symbol}`}
+                  label={t`Deposited ${isCollateral ? collateralAsset.symbol : asset.symbol
+                    }`}
                   balance={valueToBigNumber(
-                    userData?.balanceByAsset[asset?.symbol].deposited ||
-                    BN_ZERO.toNumber().toFixed(2),
+                    userData?.balanceByAsset[
+                      isCollateral ? collateralAsset.symbol : asset?.symbol
+                    ].deposited || BN_ZERO.toNumber().toFixed(2),
                   )}
-                  symbol={asset.symbol}
+                  symbol={isCollateral ? collateralAsset.symbol : asset.symbol}
                 />
               ) : (
                 <Balance
                   label={t`Wallet Balance`}
                   balance={valueToBigNumber(
-                    balances[asset.symbol].toNumber().toFixed(2),
+                    balances[
+                      isCollateral ? collateralAsset.symbol : asset.symbol
+                    ]
+                      .toNumber()
+                      .toFixed(2),
                   )}
-                  symbol={asset.symbol}
+                  symbol={isCollateral ? collateralAsset.symbol : asset.symbol}
                 />
               )}
 
@@ -885,10 +1006,15 @@ export const Leverager: FC<LeveragerProps> = ({
                       ? debounce(
                         switchChainIfUnsupported(async () => {
                           setIsLeverageLoading(true)
-                          await startLeveragerDotFromPosition(
-                            formattedToBigNumber(supplyAmount) || BN_ZERO,
-                            leverage,
-                          )
+                          isCollateral
+                            ? await leverageLdotFromPosition(
+                              formattedToBigNumber(supplyAmount) || BN_ZERO,
+                              leverage,
+                            )
+                            : await leverageDotFromPosition(
+                              formattedToBigNumber(supplyAmount) || BN_ZERO,
+                              leverage,
+                            )
                           setIsLeverageLoading(false)
                         }),
                         2000,
@@ -897,10 +1023,15 @@ export const Leverager: FC<LeveragerProps> = ({
                       : debounce(
                         switchChainIfUnsupported(async () => {
                           setIsLeverageLoading(true)
-                          await startLeverager(
-                            formattedToBigNumber(supplyAmount) || BN_ZERO,
-                            leverage,
-                          )
+                          isCollateral
+                            ? await leverageLdot(
+                              formattedToBigNumber(supplyAmount) || BN_ZERO,
+                              leverage,
+                            )
+                            : await leverageDot(
+                              formattedToBigNumber(supplyAmount) || BN_ZERO,
+                              leverage,
+                            )
                           setIsLeverageLoading(false)
                         }),
                         2000,
@@ -938,97 +1069,94 @@ export const Leverager: FC<LeveragerProps> = ({
           </WrapperDiv>
         ) : (
           <>
-            {
-              totalBorrowedInAsset.toNumber() ? (
-                <>
-                  <StatusSection>
-                    {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
-                    <InfoSection>
-                      <>
-                        <DetailInfo>
-                          <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              formatAmt(totalStakedInCollateral, {
-                                symbol: collateralAsset?.symbol,
-                                shorteningThreshold: 6,
-                              })}
-                          </DetailInfoContent>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              `≈ ${formatAmt(totalStakedInAsset, {
-                                symbol: asset.symbol,
-                                shorteningThreshold: 6,
-                              })}`}
-                          </DetailInfoContent>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              `≈US ${formatUSD(totalStakedPriceInAsset)}`}
-                          </DetailInfoContent>
-                        </DetailInfo>
-                        <DetailInfo>
-                          <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              formatAmt(valueToBigNumber(yieldInCollateral), {
-                                symbol: collateralAsset?.symbol,
-                                shorteningThreshold: 6,
-                              })}
-                          </DetailInfoContent>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
-                                symbol: asset.symbol,
-                                shorteningThreshold: 6,
-                              })}`}
-                          </DetailInfoContent>
-                          <DetailInfoContent>
-                            {exchangeRateLDOT2DOT &&
-                              `≈US ${formatUSD(
-                                valueToBigNumber(yieldPriceInAsset),
-                              )}`}
-                          </DetailInfoContent>
-                        </DetailInfo>
-                        <DetailInfo>
-                          <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
-                          <DetailInfoContent>
-                            ≈{' '}
-                            {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
-                              symbol: '%',
-                              decimalPlaces: 2,
-                            })}
-                          </DetailInfoContent>
-                        </DetailInfo>
-                      </>
-                    </InfoSection>
-                  </StatusSection>
-                  <ChartDiv>
-                    <ActionTabDateRangeDiv>
-                      <ActionDateRangeTab
-                        tabs={TABS_DATE_RANGE}
-                        contents={{
-                          onemonth: { label: t`1m` },
-                          threemonth: { label: t`3m` },
-                          sixmonth: { label: t`6m` },
-                          oneyear: { label: t`1y` },
-                          max: { label: t`max` },
-                        }}
-                        activeTab={activeDateRangeTab}
-                        onChangeActiveTab={setActiveDateRangeTab}
-                      />
-                    </ActionTabDateRangeDiv>
-                    {renderStatsGraph}
-                  </ChartDiv>
-                </>
-              ) : (
+            {totalBorrowedInAsset.toNumber() ? (
+              <>
                 <StatusSection>
+                  {/* <StatusTitle>{t`My Stats`}</StatusTitle> */}
                   <InfoSection>
-                    <WarningInfo>No Leveraged Tokens</WarningInfo>
+                    <>
+                      <DetailInfo>
+                        <DetailInfoTitle>{t`Total Staked`}</DetailInfoTitle>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            formatAmt(totalStakedInCollateral, {
+                              symbol: collateralAsset?.symbol,
+                              shorteningThreshold: 6,
+                            })}
+                        </DetailInfoContent>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            `≈ ${formatAmt(totalStakedInAsset, {
+                              symbol: asset.symbol,
+                              shorteningThreshold: 6,
+                            })}`}
+                        </DetailInfoContent>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            `≈US ${formatUSD(totalStakedPriceInAsset)}`}
+                        </DetailInfoContent>
+                      </DetailInfo>
+                      <DetailInfo>
+                        <DetailInfoTitle>{t`Est. Yield/Month*`}</DetailInfoTitle>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            formatAmt(valueToBigNumber(yieldInCollateral), {
+                              symbol: collateralAsset?.symbol,
+                              shorteningThreshold: 6,
+                            })}
+                        </DetailInfoContent>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            `≈ ${formatAmt(valueToBigNumber(yieldInAsset), {
+                              symbol: asset.symbol,
+                              shorteningThreshold: 6,
+                            })}`}
+                        </DetailInfoContent>
+                        <DetailInfoContent>
+                          {exchangeRateLDOT2DOT &&
+                            `≈US ${formatUSD(
+                              valueToBigNumber(yieldPriceInAsset),
+                            )}`}
+                        </DetailInfoContent>
+                      </DetailInfo>
+                      <DetailInfo>
+                        <DetailInfoTitle>{t`APY`}</DetailInfoTitle>
+                        <DetailInfoContent>
+                          ≈{' '}
+                          {formatAmt(valueToBigNumber(statsApy) || BN_ZERO, {
+                            symbol: '%',
+                            decimalPlaces: 2,
+                          })}
+                        </DetailInfoContent>
+                      </DetailInfo>
+                    </>
                   </InfoSection>
                 </StatusSection>
-
-              )
-            }
+                <ChartDiv>
+                  <ActionTabDateRangeDiv>
+                    <ActionDateRangeTab
+                      tabs={TABS_DATE_RANGE}
+                      contents={{
+                        onemonth: { label: t`1m` },
+                        threemonth: { label: t`3m` },
+                        sixmonth: { label: t`6m` },
+                        oneyear: { label: t`1y` },
+                        max: { label: t`max` },
+                      }}
+                      activeTab={activeDateRangeTab}
+                      onChangeActiveTab={setActiveDateRangeTab}
+                    />
+                  </ActionTabDateRangeDiv>
+                  {renderStatsGraph}
+                </ChartDiv>
+              </>
+            ) : (
+              <StatusSection>
+                <InfoSection>
+                  <WarningInfo>No Leveraged Tokens</WarningInfo>
+                </InfoSection>
+              </StatusSection>
+            )}
           </>
         )}
       </PageDiv>
