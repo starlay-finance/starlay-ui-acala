@@ -23,7 +23,7 @@ export const TOP = '/'
 export const APP_ROOT = ''
 export const APP = '/app/evm'
 export const MARKETS = '/markets'
-export const MAKAI = '/makai'
+export const LEVERAGE = '/leveraged-staking'
 export const LAY_VELAY = '/lay'
 export const LAUNCHPAD = '/launchpad'
 export const SWAP = ARTHSWAP_SWAP_URL
@@ -52,7 +52,7 @@ export const POLKADOT_SUPPORTED_PAGES = [APP, MARKETS]
 export const toLaunchpad = (token: string, network: NetworkType | undefined) =>
   evmOnly(`${LAUNCHPAD}/${token}`, network)
 export const toMakaiLoop = (symbol: string, network: NetworkType | undefined) =>
-  evmOnly(`${MAKAI}?asset=${symbol}`, network)
+  evmOnly(`${LEVERAGE}?asset=${symbol}`, network)
 
 export const SORRY = '/sorry'
 export const sorryFor = (reason: SorryReason) => `${SORRY}?reason=${reason}`

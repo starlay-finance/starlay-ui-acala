@@ -36,10 +36,14 @@ export const Create = () => {
   )
 
   const {
-    leverageLdot,
+    leverageDot,
     leverageDotFromPosition,
+    leverageLdot,
+    leverageLdotFromPosition,
     getStatusAfterLeverageDotTransaction,
     getStatusAfterLeverageDotFromPositionTransaction,
+    getStatusAfterLeverageLdotTransaction,
+    getStatusAfterLeverageLdotFromPositionTransaction,
     getLTV,
     getLt,
     getExchangeRateLDOT2DOT,
@@ -49,17 +53,31 @@ export const Create = () => {
 
   const { withTracking } = useTracking()
 
-  const leverageWithTracking = withTracking<{
+  const leverageDotWithTracking = withTracking<{
     asset: EthereumAddress
     amount: BigNumber
-    borrowAmount: BigNumber
-  }>('leverageLdot', leverageLdot)
+    leverage: BigNumber
+  }>('leverageDot', leverageDot)
 
   const leverageDotFromPositionWithTracking = withTracking<{
     asset: EthereumAddress
     amount: BigNumber
-    borrowAmount: BigNumber
+    leverage: BigNumber
   }>('leverageDotFromPosition', leverageDotFromPosition)
+
+  const leverageLdotWithTracking = withTracking<{
+    ldotAddress: EthereumAddress
+    asset: EthereumAddress
+    amount: BigNumber
+    leverage: BigNumber
+  }>('leverageDot', leverageLdot)
+
+  const leverageLdotFromPositionWithTracking = withTracking<{
+    ldotAddress: EthereumAddress
+    asset: EthereumAddress
+    amount: BigNumber
+    leverage: BigNumber
+  }>('leverageDotFromPosition', leverageLdotFromPosition)
 
   useEffect(() => {
     if (data !== 'EVM') Router.replace(APP)
@@ -76,25 +94,25 @@ export const Create = () => {
             asset={asset}
             collateralAsset={collateralAsset}
             marketReferenceCurrencyPriceInUSD={marketReferenceCurrencyPriceInUSD}
-            startLeverager={(amount, leverage) =>
-              leverageWithTracking({
+            leverageDot={(amount, leverage) =>
+              leverageDotWithTracking({
                 amount,
                 asset: asset.underlyingAsset as EthereumAddress,
-                borrowAmount: amount.multipliedBy(leverage),
+                leverage,
               })
             }
-            startLeveragerDotFromPosition={(amount, leverage) =>
+            leverageDotFromPosition={(amount, leverage) =>
               leverageDotFromPositionWithTracking({
                 amount,
                 asset: asset.underlyingAsset as EthereumAddress,
-                borrowAmount: amount.multipliedBy(leverage),
+                leverage,
               })
             }
             getStatusAfterLeverageDotTransaction={(amount, leverage) =>
               getStatusAfterLeverageDotTransaction({
                 amount,
                 asset: asset.underlyingAsset as EthereumAddress,
-                borrowAmount: amount.multipliedBy(leverage),
+                leverage,
               })
             }
             getStatusAfterLeverageDotFromPositionTransaction={(
@@ -104,7 +122,42 @@ export const Create = () => {
               getStatusAfterLeverageDotFromPositionTransaction({
                 amount,
                 asset: asset.underlyingAsset as EthereumAddress,
-                borrowAmount: amount.multipliedBy(leverage),
+                leverage,
+              })
+            }
+            leverageLdot={(amount, leverage) =>
+              leverageLdotWithTracking({
+                amount,
+                asset: asset.underlyingAsset as EthereumAddress,
+                ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,
+                leverage,
+              })
+            }
+            leverageLdotFromPosition={(amount, leverage) =>
+              leverageLdotFromPositionWithTracking({
+                amount,
+                asset: asset.underlyingAsset as EthereumAddress,
+                ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,
+                leverage,
+              })
+            }
+            getStatusAfterLeverageLdotTransaction={(amount, leverage) =>
+              getStatusAfterLeverageLdotTransaction({
+                amount,
+                asset: asset.underlyingAsset as EthereumAddress,
+                ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,
+                leverage,
+              })
+            }
+            getStatusAfterLeverageLdotFromPositionTransaction={(
+              amount,
+              leverage,
+            ) =>
+              getStatusAfterLeverageLdotFromPositionTransaction({
+                amount,
+                asset: asset.underlyingAsset as EthereumAddress,
+                ldotAddress: collateralAsset?.underlyingAsset as EthereumAddress,
+                leverage,
               })
             }
             getLTV={() =>
